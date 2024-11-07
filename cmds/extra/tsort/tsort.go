@@ -179,16 +179,16 @@ func topologicalOrdering(
 		}
 
 		// Break a cycle and try Kahn's algorithm again
-		nonRoots.forEachUnique(func(next string) bool {
+		for next := range nonRoots.allUnique() {
 			cycle := cycleStartingAt(g, next)
 			if len(cycle) == 0 {
-				return true
+				continue
 			}
 
 			g.removeEdge(cycle[len(cycle)-1], cycle[0])
 			cycles(cycle)
-			return false
-		})
+			break
+		}
 	}
 }
 
