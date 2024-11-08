@@ -5,9 +5,11 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"slices"
@@ -393,6 +395,25 @@ func TestTsort(t *testing.T) {
 				gotStdout)
 		}
 	})
+}
+
+func BenchmarkTsortAcyclicGraph(b *testing.B) {
+	rnd := rand.New(rand.NewSource(1))
+	var rndAcyclicGraph bytes.Buffer
+	n := 10_000
+	for range 100 * n {
+		x := rnd.Intn(n + 1)
+		y := rnd.Intn(n + 1)
+		_, _ = fmt.Fprintln(&rndAcyclicGraph, min(x, y), max(x, y))
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := run(&rndAcyclicGraph, io.Discard, io.Discard)
+		if err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
 }
 
 func tempFile(t *testing.T, contents string) (file string) {
