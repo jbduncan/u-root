@@ -58,7 +58,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -91,12 +90,10 @@ func run(
 	if err != nil {
 		return err
 	}
-	scanner := bufio.NewScanner(bytes.NewReader(buf))
-	scanner.Split(bufio.ScanWords)
 
 	g := newGraph()
 
-	if err = parseInto(scanner, g); err != nil {
+	if err = parseInto(buf, g); err != nil {
 		return err
 	}
 
@@ -115,15 +112,19 @@ func run(
 	return err
 }
 
-func parseInto(scanner *bufio.Scanner, g *graph) error {
+func parseInto(buf []byte, g *graph) error {
+	fields := bytes.Fields(buf)
+	var i int
 	var odd bool
 
-	next := func() (string, bool) {
-		if !scanner.Scan() {
-			return "", false
+	next := func() ([]byte, bool) {
+		if i == len(fields) {
+			return nil, false
 		}
 		odd = !odd
-		return scanner.Text(), true
+		result := fields[i]
+		i += 1
+		return result, true
 	}
 
 	for {
@@ -131,20 +132,17 @@ func parseInto(scanner *bufio.Scanner, g *graph) error {
 		if !ok {
 			break
 		}
+
 		b, ok := next()
 		if !ok {
 			break
 		}
 
-		if a == b {
-			g.addNode(a)
+		if bytes.Equal(a, b) {
+			g.addNode(string(a))
 		} else {
-			g.putEdge(a, b)
+			g.putEdge(string(a), string(b))
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
 	}
 
 	if odd {
