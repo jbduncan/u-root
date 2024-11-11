@@ -59,6 +59,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -76,9 +77,9 @@ func run(
 	stderr io.Writer,
 	args ...string,
 ) error {
+	var err error
 	in := io.NopCloser(stdin)
 	if len(args) >= 1 {
-		var err error
 		in, err = os.Open(args[0])
 		if err != nil {
 			return err
@@ -86,16 +87,19 @@ func run(
 	}
 	defer in.Close()
 
-	scanner := bufio.NewScanner(in)
+	buf, err := io.ReadAll(in)
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(buf))
 	scanner.Split(bufio.ScanWords)
 
 	g := newGraph()
 
-	if err := parseInto(scanner, g); err != nil {
+	if err = parseInto(scanner, g); err != nil {
 		return err
 	}
 
-	var err error
 	topologicalOrdering(
 		g,
 		func(node string) {
