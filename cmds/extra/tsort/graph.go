@@ -23,7 +23,7 @@ func (g *graph) addNode(node string) {
 	if _, ok := g.nodeToData[node]; !ok {
 		g.nodeToData[node] = nodeData{
 			inDegree:   0,
-			successors: make(set),
+			successors: makeSet(),
 		}
 	}
 }
@@ -60,11 +60,11 @@ func (g *graph) removeEdge(source, target string) {
 		panic("target node is not in graph")
 	}
 
-	delete(g.nodeToData[source].successors, target)
-	n := g.nodeToData[target]
+	g.nodeToData[source].successors.remove(target)
+	targetData := g.nodeToData[target]
 	g.nodeToData[target] = nodeData{
-		inDegree:   n.inDegree - 1,
-		successors: n.successors,
+		inDegree:   targetData.inDegree - 1,
+		successors: targetData.successors,
 	}
 }
 

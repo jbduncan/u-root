@@ -216,7 +216,7 @@ func nonRootsOf(g *graph) multiset {
 
 func cycleStartingAt(g *graph, node string) []string {
 	stack := []string{node}
-	inStack := make(set)
+	inStack := makeSet()
 	inStack.add(node)
 	popStack := func() string {
 		var result string
@@ -245,7 +245,7 @@ func cycleStartingAt(g *graph, node string) []string {
 			}
 		}
 
-		delete(inStack, popStack())
+		inStack.remove(popStack())
 		return false
 	}
 	dfs()
