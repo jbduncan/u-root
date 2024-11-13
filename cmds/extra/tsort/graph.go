@@ -6,12 +6,12 @@ package main
 
 func newGraph() *graph {
 	return &graph{
-		nodeToData: make(map[string]nodeData),
+		nodeToData: make(map[string]*nodeData),
 	}
 }
 
 type graph struct {
-	nodeToData map[string]nodeData
+	nodeToData map[string]*nodeData
 }
 
 type nodeData struct {
@@ -21,7 +21,7 @@ type nodeData struct {
 
 func (g *graph) addNode(node string) {
 	if _, ok := g.nodeToData[node]; !ok {
-		g.nodeToData[node] = nodeData{
+		g.nodeToData[node] = &nodeData{
 			inDegree:   0,
 			successors: makeSet(),
 		}
@@ -35,11 +35,7 @@ func (g *graph) putEdge(source, target string) {
 	successors := g.nodeToData[source].successors
 	if !successors.has(target) {
 		successors.add(target)
-		n := g.nodeToData[target]
-		g.nodeToData[target] = nodeData{
-			inDegree:   n.inDegree + 1,
-			successors: n.successors,
-		}
+		g.nodeToData[target].inDegree++
 	}
 }
 
@@ -61,11 +57,7 @@ func (g *graph) removeEdge(source, target string) {
 	}
 
 	g.nodeToData[source].successors.remove(target)
-	targetData := g.nodeToData[target]
-	g.nodeToData[target] = nodeData{
-		inDegree:   targetData.inDegree - 1,
-		successors: targetData.successors,
-	}
+	g.nodeToData[target].inDegree--
 }
 
 func (g *graph) inDegree(node string) int {
