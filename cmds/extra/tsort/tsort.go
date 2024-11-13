@@ -76,16 +76,17 @@ func run(
 	stderr io.Writer,
 	args ...string,
 ) error {
-	var buf []byte
 	var err error
+	in := io.NopCloser(stdin)
 	if len(args) >= 1 {
-		buf, err = os.ReadFile(args[0])
-	} else if in, ok := stdin.(*os.File); ok {
-		// uses less memory than io.ReadAll when stdin is os.Stdin
-		buf, err = os.ReadFile(in.Name())
-	} else {
-		buf, err = io.ReadAll(stdin)
+		in, err = os.Open(args[0])
+		if err != nil {
+			return err
+		}
 	}
+	defer in.Close()
+
+	buf, err := io.ReadAll(in)
 	if err != nil {
 		return err
 	}
