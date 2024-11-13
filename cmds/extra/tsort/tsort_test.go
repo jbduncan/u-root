@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -153,6 +152,12 @@ func TestTsort(t *testing.T) {
 			name:       "file: line: a b b c c d",
 			args:       []string{tempFile(t, "a b b c c d")},
 			wantStdout: "a\nb\nc\nd\n",
+		},
+		{
+			name: "stdin based on *os.File to simulate real os.Stdin:" +
+				" one edge: a\\nb",
+			stdin:      must(os.Open(tempFile(t, "a\nb"))),
+			wantStdout: "a\nb\n",
 		},
 	}
 	for _, tt := range tests {
@@ -399,24 +404,29 @@ func TestTsort(t *testing.T) {
 
 func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	rnd := rand.New(rand.NewSource(1))
-	var rndAcyclicGraph bytes.Buffer
+	// Use a file rather than an in-memory byte buffer to exercise the code
+	// path that reads the graph with less memory.
+	rndAcyclicGraph := must(os.Open(tempFile(b, "")))
 	n := 10_000
 	for range 100 * n {
 		x := rnd.Intn(n + 1)
 		y := rnd.Intn(n + 1)
-		_, _ = fmt.Fprintln(&rndAcyclicGraph, min(x, y), max(x, y))
+		_, _ = fmt.Fprintln(rndAcyclicGraph, min(x, y), max(x, y))
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := run(&rndAcyclicGraph, io.Discard, io.Discard)
+		err := run(rndAcyclicGraph, io.Discard, io.Discard)
 		if err != nil {
 			b.Fatalf("unexpected error: %v", err)
 		}
 	}
 }
 
-func tempFile(t *testing.T, contents string) (file string) {
+func tempFile(t interface {
+	TempDir() string
+	Fatalf(format string, args ...any)
+}, contents string) (file string) {
 	dir := t.TempDir()
 	n := filepath.Join(dir, "file")
 	if err := os.WriteFile(n, []byte(contents), 0o666); err != nil {
@@ -616,4 +626,11 @@ func hasDuplicates(values []string) bool {
 		s.add(value)
 	}
 	return false
+}
+
+func must(f *os.File, err error) *os.File {
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
