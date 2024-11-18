@@ -399,8 +399,6 @@ func TestTsort(t *testing.T) {
 
 func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	rnd := rand.New(rand.NewSource(1))
-	// Use a file rather than an in-memory byte buffer to exercise the code
-	// path that reads the graph with less memory.
 	rndAcyclicGraph := new(bytes.Buffer)
 	n := 10_000
 	for range 100 * n {
