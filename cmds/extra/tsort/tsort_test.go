@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -397,17 +396,19 @@ func TestTsort(t *testing.T) {
 	})
 }
 
-func BenchmarkTsortAcyclicGraph(b *testing.B) {
+var rndAcyclicGraph = func() io.Reader {
 	rnd := rand.New(rand.NewSource(1))
-	rndAcyclicGraph := new(bytes.Buffer)
+	var rndAcyclicGraph strings.Builder
 	n := 10_000
 	for range 100 * n {
 		x := rnd.Intn(n + 1)
 		y := rnd.Intn(n + 1)
-		_, _ = fmt.Fprintln(rndAcyclicGraph, min(x, y), max(x, y))
+		_, _ = fmt.Fprintln(&rndAcyclicGraph, min(x, y), max(x, y))
 	}
+	return strings.NewReader(rndAcyclicGraph.String())
+}()
 
-	b.ResetTimer()
+func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		err := run(rndAcyclicGraph, io.Discard, io.Discard)
 		if err != nil {

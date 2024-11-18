@@ -58,13 +58,13 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"slices"
+	"strings"
 )
 
 var errNonFatal = errors.New("non-fatal")
@@ -86,14 +86,15 @@ func run(
 	}
 	defer in.Close()
 
-	buf, err := io.ReadAll(in)
+	var buf strings.Builder
+	_, err = io.Copy(&buf, in)
 	if err != nil {
 		return err
 	}
 
 	g := newGraph()
 
-	if err = parseInto(buf, g); err != nil {
+	if err = parseInto(buf.String(), g); err != nil {
 		return err
 	}
 
@@ -112,14 +113,14 @@ func run(
 	return err
 }
 
-func parseInto(buf []byte, g *graph) error {
-	fields := bytes.Fields(buf)
+func parseInto(buf string, g *graph) error {
+	fields := strings.Fields(buf)
 	var i int
 	var odd bool
 
-	next := func() ([]byte, bool) {
+	next := func() (string, bool) {
 		if i == len(fields) {
-			return nil, false
+			return "", false
 		}
 		odd = !odd
 		result := fields[i]
@@ -138,10 +139,10 @@ func parseInto(buf []byte, g *graph) error {
 			break
 		}
 
-		if bytes.Equal(a, b) {
-			g.addNode(string(a))
+		if a == b {
+			g.addNode(a)
 		} else {
-			g.putEdge(string(a), string(b))
+			g.putEdge(a, b)
 		}
 	}
 
