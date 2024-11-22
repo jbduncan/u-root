@@ -166,7 +166,7 @@ func topologicalOrdering(
 		for !roots.isEmpty() {
 			next := roots.dequeue()
 			result = append(result, next)
-			for _, succ := range g.successors(next) {
+			for succ := range g.successors(next) {
 				nonRoots.removeOne(succ)
 				if !nonRoots.has(succ) {
 					roots.enqueue(succ)
@@ -228,7 +228,7 @@ func cycleStartingAt(g *graph, node string) []string {
 	var cycle []string
 	var dfs func() bool
 	dfs = func() bool {
-		for _, succ := range g.successors(top(stack)) {
+		for succ := range g.successors(top(stack)) {
 			if inStack.has(succ) {
 				// cycle found
 				cycle = append(cycle, popStack())
