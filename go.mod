@@ -1,8 +1,8 @@
 module github.com/u-root/u-root
 
-go 1.22.0
+go 1.23
 
-toolchain go1.22.6
+toolchain go1.23.4
 
 require (
 	github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2
@@ -62,7 +62,6 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/u-root/cpuid v0.0.0
-	github.com/u-root/mkuimage v0.0.0-20241128172401-dc7520ecaa89
 )
 
 require (

@@ -61,6 +61,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log"
 	"os"
 	"slices"
@@ -76,41 +77,43 @@ func run(
 	stderr io.Writer,
 	args ...string,
 ) error {
-	var err error
 	in := io.NopCloser(stdin)
 	if len(args) >= 1 {
-		in, err = os.Open(args[0])
-		if err != nil {
+		var err error
+		if in, err = os.Open(args[0]); err != nil {
 			return err
 		}
 	}
 	defer in.Close()
 
 	var buf strings.Builder
-	_, err = io.Copy(&buf, in)
-	if err != nil {
+	if _, err := io.Copy(&buf, in); err != nil {
 		return err
 	}
 
 	g := newGraph()
 
-	if err = parseInto(buf.String(), g); err != nil {
+	if err := parseInto(buf.String(), g); err != nil {
 		return err
 	}
 
-	topologicalOrdering(
+	var cycleFound bool
+	nodes := topologicalOrdering(
 		g,
-		func(node string) {
-			fmt.Fprintf(stdout, "%v\n", node)
-		},
 		func(cycle []string) {
 			fmt.Fprintf(stderr, "tsort: %v\n", "cycle in data")
 			for _, node := range cycle {
 				fmt.Fprintf(stderr, "tsort: %v\n", node)
 			}
-			err = errNonFatal
+			cycleFound = true
 		})
-	return err
+	for node := range nodes {
+		fmt.Fprintf(stdout, "%v\n", node)
+	}
+	if cycleFound {
+		return errNonFatal
+	}
+	return nil
 }
 
 func parseInto(buf string, g *graph) error {
@@ -155,9 +158,8 @@ func parseInto(buf string, g *graph) error {
 
 func topologicalOrdering(
 	g *graph,
-	f func(node string),
 	cycles func(cycle []string),
-) {
+) iter.Seq[string] {
 	for {
 		// Kahn's algorithm
 		var result []string
@@ -175,29 +177,26 @@ func topologicalOrdering(
 		}
 		if nonRoots.isEmpty() {
 			// No cycles left
-			for _, value := range result {
-				f(value)
-			}
-			break
+			return slices.Values(result)
 		}
 
 		// Break a cycle and try Kahn's algorithm again
-		nonRoots.forEachUnique(func(next string) bool {
+		for next := range nonRoots.allUnique() {
 			cycle := cycleStartingAt(g, next)
 			if len(cycle) == 0 {
-				return true
+				continue
 			}
 
 			g.removeEdge(cycle[len(cycle)-1], cycle[0])
 			cycles(cycle)
-			return false
-		})
+			break
+		}
 	}
 }
 
 func rootsOf(g *graph) queue {
 	result := queue{}
-	for node := range g.nodeToData {
+	for node := range g.nodes() {
 		if g.inDegree(node) == 0 {
 			result.enqueue(node)
 		}
@@ -207,7 +206,7 @@ func rootsOf(g *graph) queue {
 
 func nonRootsOf(g *graph) multiset {
 	result := newMultiset()
-	for node := range g.nodeToData {
+	for node := range g.nodes() {
 		if g.inDegree(node) > 0 {
 			result.add(node, g.inDegree(node))
 		}
@@ -216,45 +215,37 @@ func nonRootsOf(g *graph) multiset {
 }
 
 func cycleStartingAt(g *graph, node string) []string {
-	stack := []string{node}
+	s := makeStack()
+	s.push(node)
 	inStack := makeSet()
 	inStack.add(node)
-	popStack := func() string {
-		var result string
-		result, stack = stack[len(stack)-1], stack[:len(stack)-1]
-		return result
-	}
 
 	var cycle []string
 	var dfs func() bool
 	dfs = func() bool {
-		for succ := range g.successors(top(stack)) {
+		for succ := range g.successors(s.peek()) {
 			if inStack.has(succ) {
 				// cycle found
-				cycle = append(cycle, popStack())
-				for top(cycle) != succ {
-					cycle = append(cycle, popStack())
+				cycle = append(cycle, s.pop())
+				for cycle[len(cycle)-1] != succ {
+					cycle = append(cycle, s.pop())
 				}
 				slices.Reverse(cycle)
 				return true
 			}
 
-			stack = append(stack, succ)
+			s.push(succ)
 			inStack.add(succ)
 			if dfs() {
 				return true
 			}
 		}
 
-		inStack.remove(popStack())
+		inStack.remove(s.pop())
 		return false
 	}
 	dfs()
 	return cycle
-}
-
-func top(s []string) string {
-	return s[len(s)-1]
 }
 
 func main() {

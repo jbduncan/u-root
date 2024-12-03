@@ -7,11 +7,10 @@ package main
 import (
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestGraph(t *testing.T) {
+	testNodes(t, fixtureGraph())
 	testSuccessors(t, fixtureGraph())
 	testInDegree(t, fixtureGraph())
 	testRemoveEdge(t, fixtureGraph())
@@ -40,40 +39,42 @@ func fixtureGraph() *graph {
 	return g
 }
 
+func testNodes(t *testing.T, g *graph) {
+	if diff := orderInsensitiveIterDiff(
+		g.nodes(),
+		"a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+	); diff != "" {
+		t.Errorf(
+			"values mismatch (-g.nodes() +expected):\n%s",
+			diff)
+	}
+}
+
 func testSuccessors(t *testing.T, g *graph) {
-	if diff := cmp.Diff(g.successors("a"), setOf("d", "e")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("a"), "d", "e"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"a\") +expected):\n%s",
+			"values mismatch (-g.successors(\"a\") +expected):\n%s",
 			diff)
 	}
-	if diff := cmp.Diff(g.successors("b"), setOf("e", "f", "i")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("b"), "e", "f", "i"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"b\") +expected):\n%s",
+			"values mismatch (-g.successors(\"b\") +expected):\n%s",
 			diff)
 	}
-	if diff := cmp.Diff(g.successors("e"), setOf("h", "i")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("e"), "h", "i"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"e\") +expected):\n%s",
+			"values mismatch (-g.successors(\"e\") +expected):\n%s",
 			diff)
 	}
-	if diff := cmp.Diff(g.successors("f"), setOf("i")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("f"), "i"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"f\") +expected):\n%s",
+			"values mismatch (-g.successors(\"f\") +expected):\n%s",
 			diff)
 	}
-	if diff := cmp.Diff(g.successors("c"), setOf("g")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("c"), "g"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"c\") +expected):\n%s",
+			"values mismatch (-g.successors(\"c\") +expected):\n%s",
 			diff)
-	}
-	if len(g.successors("h")) > 0 {
-		t.Errorf(`g.successors("h"): want empty, got %v`, g.successors("h"))
-	}
-	if len(g.successors("i")) > 0 {
-		t.Errorf(`g.successors("i"): want empty, got %v`, g.successors("i"))
-	}
-	if len(g.successors("j")) > 0 {
-		t.Errorf(`g.successors("j"): want empty, got %v`, g.successors("j"))
 	}
 	caughtPanic := catchPanic(func() { g.successors("absent") })
 	if caughtPanic == nil ||
@@ -124,14 +125,14 @@ func testRemoveEdge(t *testing.T, g *graph) {
 	testSuccessors(t, g) // test that there were no changes
 
 	g.removeEdge("b", "e")
-	if diff := cmp.Diff(g.successors("b"), setOf("f", "i")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("b"), "f", "i"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"b\") +expected):\n%s",
+			"values mismatch (-g.successors(\"b\") +expected):\n%s",
 			diff)
 	}
-	if diff := cmp.Diff(g.successors("e"), setOf("h", "i")); diff != "" {
+	if diff := orderInsensitiveIterDiff(g.successors("e"), "h", "i"); diff != "" {
 		t.Errorf(
-			"set mismatch (-g.successors(\"e\") +expected):\n%s",
+			"values mismatch (-g.successors(\"e\") +expected):\n%s",
 			diff)
 	}
 	if g.inDegree("e") != 1 {
