@@ -5,9 +5,8 @@
 package main
 
 import (
+	"slices"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestSet(t *testing.T) {
@@ -16,8 +15,8 @@ func TestSet(t *testing.T) {
 	if s.has("a") {
 		t.Errorf(`set %#v: want to not have "a", but did have it`, s)
 	}
-	if len(s) != 0 {
-		t.Errorf(`set %#v: want len of 0, got %d`, s, len(s))
+	if l := len(slices.Collect(s.all())); l != 0 {
+		t.Errorf(`set %#v: want len of 0, got %d`, s, l)
 	}
 
 	s.add("b")
@@ -43,10 +42,14 @@ func TestSet(t *testing.T) {
 		t.Errorf(`set %#v: want to have "e", but did not`, s)
 	}
 	if s.has("absent-value") {
-		t.Errorf(`set %#v: want to not have "absent-value", but did have it`, s)
+		t.Errorf(
+			`set %#v: want to not have "absent-value", but did have it`,
+			s)
 	}
-	if diff := cmp.Diff(s, setOf("a", "b", "c", "d", "e")); diff != "" {
-		t.Errorf("set mismatch (-s +expected):\n%s", diff)
+	if diff := orderInsensitiveIterDiff(
+		s.all(), "a", "b", "c", "d", "e",
+	); diff != "" {
+		t.Errorf("values mismatch (-s +expected):\n%s", diff)
 	}
 
 	s.remove("a")
@@ -69,17 +72,21 @@ func TestSet(t *testing.T) {
 		t.Errorf(`set %#v: want to not have "e", but did have it`, s)
 	}
 	if s.has("absent-value") {
-		t.Errorf(`set %#v: want to not have "absent-value", but did have it`, s)
+		t.Errorf(
+			`set %#v: want to not have "absent-value", but did have it`,
+			s)
 	}
-	if diff := cmp.Diff(s, setOf("b", "d")); diff != "" {
-		t.Errorf("set mismatch (-s +expected):\n%s", diff)
+	if diff := orderInsensitiveIterDiff(s.all(), "b", "d"); diff != "" {
+		t.Errorf("values mismatch (-s +expected):\n%s", diff)
 	}
-}
 
-func setOf(values ...string) set {
-	s := makeSet()
-	for _, v := range values {
-		s.add(v)
+	caughtPanic := catchPanic(func() { s.remove("a") })
+	if caughtPanic == nil {
+		t.Fatalf(`set %#v: want remove to panic, got no panic`, s)
 	}
-	return s
+	if caughtPanic.Error() != "set is empty" {
+		t.Fatalf(
+			`set %#v: want remove to panic with "set is empty", got %q`,
+			s, caughtPanic)
+	}
 }
