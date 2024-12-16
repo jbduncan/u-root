@@ -9,7 +9,7 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 )
 
@@ -23,11 +23,11 @@ func main() {
 			panic(err)
 		}
 
-		rnd := rand.New(rand.NewSource(1))
+		rnd := rand.New(&rand.PCG{})
 		n := 10_000
 		for range 100 * n {
-			x := rnd.Intn(n + 1)
-			y := rnd.Intn(n + 1)
+			x := rnd.IntN(n + 1)
+			y := rnd.IntN(n + 1)
 			_, _ = fmt.Fprintln(f, min(x, y), max(x, y))
 		}
 	}()
@@ -41,11 +41,11 @@ func main() {
 			panic(err)
 		}
 
-		rnd := rand.New(rand.NewSource(1))
+		rnd := rand.New(&rand.PCG{})
 		n := 200
 		for range 100 * n {
-			x := rnd.Intn(n + 1)
-			y := rnd.Intn(n + 1)
+			x := rnd.IntN(n + 1)
+			y := rnd.IntN(n + 1)
 			_, _ = fmt.Fprintln(f, x, y)
 		}
 	}()
