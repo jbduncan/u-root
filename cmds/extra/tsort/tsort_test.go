@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"slices"
@@ -398,11 +398,11 @@ func TestTsort(t *testing.T) {
 
 var acyclicGraph = func() string {
 	var result strings.Builder
-	rnd := rand.New(rand.NewSource(1))
+	rnd := rand.New(rand.New(&rand.PCG{}))
 	n := 10_000
 	for range 100 * n {
-		x := rnd.Intn(n + 1)
-		y := rnd.Intn(n + 1)
+		x := rnd.IntN(n + 1)
+		y := rnd.IntN(n + 1)
 		_, _ = fmt.Fprintln(&result, min(x, y), max(x, y))
 	}
 	return result.String()
@@ -410,12 +410,20 @@ var acyclicGraph = func() string {
 
 var cyclicGraph = func() string {
 	var result strings.Builder
-	rnd := rand.New(rand.NewSource(1))
+	rnd := rand.New(rand.New(&rand.PCG{}))
 	n := 200
 	for range 100 * n {
-		x := rnd.Intn(n + 1)
-		y := rnd.Intn(n + 1)
+		x := rnd.IntN(n + 1)
+		y := rnd.IntN(n + 1)
 		_, _ = fmt.Fprintln(&result, x, y)
+	}
+	return result.String()
+}()
+
+var repeatingEntryGraph = func() string {
+	var result strings.Builder
+	for range 1_000_000 {
+		_, _ = fmt.Fprintln(&result, 1, 2)
 	}
 	return result.String()
 }()
@@ -433,6 +441,15 @@ func BenchmarkTsortCyclicGraph(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		err := run(strings.NewReader(cyclicGraph), io.Discard, io.Discard)
 		if err != nil && !errors.Is(err, errNonFatal) {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkTsortRepeatingEntryGraph(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		err := run(strings.NewReader(repeatingEntryGraph), io.Discard, io.Discard)
+		if err != nil {
 			b.Fatalf("unexpected error: %v", err)
 		}
 	}
