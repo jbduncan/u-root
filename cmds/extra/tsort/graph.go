@@ -29,13 +29,26 @@ func (g *graph) addNode(node string) {
 }
 
 func (g *graph) putEdge(source, target string) {
-	g.addNode(source)
-	g.addNode(target)
+	sourceData, ok := g.nodeToData[source]
+	if !ok {
+		sourceData = &nodeData{
+			inDegree:   0,
+			successors: makeSet(),
+		}
+		g.nodeToData[source] = sourceData
+	}
+	targetData, ok := g.nodeToData[target]
+	if !ok {
+		targetData = &nodeData{
+			inDegree:   0,
+			successors: makeSet(),
+		}
+		g.nodeToData[target] = targetData
+	}
 
-	successors := g.nodeToData[source].successors
-	if !successors.has(target) {
-		successors.add(target)
-		g.nodeToData[target].inDegree++
+	if !sourceData.successors.has(target) {
+		sourceData.successors.add(target)
+		targetData.inDegree++
 	}
 }
 
