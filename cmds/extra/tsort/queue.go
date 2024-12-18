@@ -18,9 +18,7 @@ func (q *queue) dequeue() string {
 	}
 
 	result := q.q[0]
-
 	q.q = q.q[1:]
-
 	return result
 }
 

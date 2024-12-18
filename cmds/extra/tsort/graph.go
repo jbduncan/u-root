@@ -4,6 +4,11 @@
 
 package main
 
+import (
+	"iter"
+	"maps"
+)
+
 func newGraph() *graph {
 	return &graph{
 		nodeToData: make(map[string]*nodeData),
@@ -39,13 +44,16 @@ func (g *graph) putEdge(source, target string) {
 	}
 }
 
-func (g *graph) successors(node string) set {
-	n, ok := g.nodeToData[node]
-	if !ok {
-		panic("node is not in graph")
+func (g *graph) nodes() iter.Seq[string] {
+	return maps.Keys(g.nodeToData)
+}
+
+func (g *graph) successors(node string) iter.Seq[string] {
+	if data, ok := g.nodeToData[node]; ok {
+		return data.successors.all()
 	}
 
-	return n.successors
+	panic("node is not in graph")
 }
 
 func (g *graph) removeEdge(source, target string) {
@@ -61,9 +69,8 @@ func (g *graph) removeEdge(source, target string) {
 }
 
 func (g *graph) inDegree(node string) int {
-	n, ok := g.nodeToData[node]
-	if !ok {
-		return 0
+	if data, ok := g.nodeToData[node]; ok {
+		return data.inDegree
 	}
-	return n.inDegree
+	return 0
 }

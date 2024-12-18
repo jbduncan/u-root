@@ -136,30 +136,35 @@ func TestMultisetRemoveOne(t *testing.T) {
 	}
 }
 
-func TestMultisetForEachUnique(t *testing.T) {
+func TestMultisetAllUnique(t *testing.T) {
 	m := newMultiset()
+
+	test := func(expected []string) {
+		var actual []string
+		for value := range m.allUnique() {
+			actual = append(actual, value)
+		}
+		if diff := orderInsensitiveDiff(actual, expected); diff != "" {
+			t.Fatalf(
+				"allUnique mismatch (-actual +expected):\n%s",
+				diff)
+		}
+	}
+
 	m.add("a", 1)
 	m.add("b", 2)
 	m.add("c", 3)
+	test([]string{"a", "b", "c"})
 
-	var actual []string
-	m.forEachUnique(func(value string) bool {
-		actual = append(actual, value)
-		return true
-	})
-	expected := []string{"a", "b", "c"}
-	if diff := orderInsensitiveDiff(actual, expected); diff != "" {
-		t.Fatalf(
-			"forEachUnique mismatch (-actual +expected):\n%s",
-			diff)
+	m.add("d", 1)
+	test([]string{"a", "b", "c", "d"})
+
+	var count int
+	for _ = range m.allUnique() {
+		count++
+		break
 	}
-
-	var values []string
-	m.forEachUnique(func(value string) bool {
-		values = append(values, value)
-		return false
-	})
-	if len(values) != 1 {
-		t.Fatalf("expected forEachUnique to break when false is returned")
+	if count != 1 {
+		t.Fatalf("expected allUnique to break when false is returned")
 	}
 }

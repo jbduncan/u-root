@@ -14,9 +14,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 var errDiskCrashed = errors.New("disk crashed")
@@ -589,7 +586,7 @@ func checkValidTopologicalOrdering(
 	graph string,
 	topologicalOrdering fmt.Stringer,
 ) {
-	graphNodes := nodes(graph)
+	graphNodes := nodesOf(graph)
 	topoNodes := strings.Fields(topologicalOrdering.String())
 
 	if diff := orderInsensitiveDiff(graphNodes, topoNodes); diff != "" {
@@ -612,7 +609,7 @@ func checkValidTopologicalOrdering(
 	}
 }
 
-func nodes(graph string) []string {
+func nodesOf(graph string) []string {
 	fields := strings.Fields(graph)
 	s := makeSet()
 
@@ -639,11 +636,6 @@ func edges(graph string) []edge {
 		result = append(result, edge{source: nodes[i], target: nodes[i+1]})
 	}
 	return result
-}
-
-func orderInsensitiveDiff(a []string, b []string) string {
-	return cmp.Diff(
-		a, b, cmpopts.SortSlices(func(x, y string) bool { return x < y }))
 }
 
 func hasDuplicates(values []string) bool {

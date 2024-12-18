@@ -4,7 +4,11 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"iter"
+	"maps"
+)
 
 func newMultiset() multiset {
 	return multiset{m: map[string]int{}}
@@ -45,10 +49,6 @@ func (m multiset) isEmpty() bool {
 	return len(m.m) == 0
 }
 
-func (m multiset) forEachUnique(f func(value string) bool) {
-	for v := range m.m {
-		if !f(v) {
-			break
-		}
-	}
+func (m multiset) allUnique() iter.Seq[string] {
+	return maps.Keys(m.m)
 }
