@@ -17,7 +17,7 @@ func main() {
 		f, err := os.OpenFile(
 			"some-random-acyclic-graph.txt",
 			os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-			0o666)
+			0o600)
 		if err != nil {
 			panic(err)
 		}
@@ -35,7 +35,7 @@ func main() {
 		f, err := os.OpenFile(
 			"some-random-cyclic-graph.txt",
 			os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
-			0o666)
+			0o600)
 		if err != nil {
 			panic(err)
 		}
