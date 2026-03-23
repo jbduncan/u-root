@@ -5,6 +5,7 @@
 package main
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -136,29 +137,25 @@ func TestMultisetRemoveOne(t *testing.T) {
 	}
 }
 
-func TestMultisetForEachUnique(t *testing.T) {
+func TestMultisetAllUnique(t *testing.T) {
 	m := newMultiset()
 	m.add("a", 1)
 	m.add("b", 2)
 	m.add("c", 3)
 
-	var actual []string
-	m.forEachUnique(func(value string) bool {
-		actual = append(actual, value)
-		return true
-	})
+	actual := slices.Collect(m.allUnique())
 	expected := []string{"a", "b", "c"}
 	if diff := orderInsensitiveDiff(actual, expected); diff != "" {
 		t.Fatalf(
-			"forEachUnique mismatch (-actual +expected):\n%s",
+			"allUnique mismatch (-actual +expected):\n%s",
 			diff)
 	}
 
 	var values []string
-	m.forEachUnique(func(value string) bool {
+	for value := range m.allUnique() {
 		values = append(values, value)
-		return false
-	})
+		break
+	}
 	if len(values) != 1 {
 		t.Fatalf("expected forEachUnique to break when false is returned")
 	}

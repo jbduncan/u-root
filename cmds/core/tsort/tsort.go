@@ -61,6 +61,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log"
 	"os"
 	"slices"
@@ -89,8 +90,7 @@ func run(
 	defer in.Close()
 
 	var buf strings.Builder
-	_, err = io.Copy(&buf, in)
-	if err != nil {
+	if _, err = io.Copy(&buf, in); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func run(
 			fmt.Fprintf(stdout, "%v\n", node)
 		},
 		func(cycle []string) {
-			fmt.Fprintf(stderr, "tsort: %v\n", "cycle in data")
+			fmt.Fprintln(stderr, "tsort: cycle in data")
 			for _, node := range cycle {
 				fmt.Fprintf(stderr, "tsort: %v\n", node)
 			}
@@ -184,16 +184,9 @@ func topologicalOrdering(
 		}
 
 		// Break a cycle and try Kahn's algorithm again
-		nonRoots.forEachUnique(func(next string) bool {
-			cycle := cycleStartingAt(g, next)
-			if len(cycle) == 0 {
-				return true
-			}
-
-			g.removeEdge(cycle[len(cycle)-1], cycle[0])
-			cycles(cycle)
-			return false
-		})
+		cycle := cycleStartingAtAnyOfNodes(g, nonRoots.allUnique())
+		g.removeEdge(cycle[len(cycle)-1], cycle[0])
+		cycles(cycle)
 	}
 }
 
@@ -217,46 +210,63 @@ func nonRootsOf(g *graph) multiset {
 	return result
 }
 
-func cycleStartingAt(g *graph, node string) []string {
-	stack := []string{node}
-	inStack := makeSet()
-	inStack.add(node)
-	popStack := func() string {
-		var result string
-		result, stack = stack[len(stack)-1], stack[:len(stack)-1]
-		return result
+type nodeState int
+
+const (
+	notVisited nodeState = iota
+	partiallyVisited
+	fullyVisited
+)
+
+func (n nodeState) String() string {
+	switch n {
+	case notVisited:
+		return "notVisited"
+	case partiallyVisited:
+		return "partiallyVisited"
+	case fullyVisited:
+		return "fullyVisited"
 	}
+	panic(fmt.Sprintf("unknown nodeState: %d", n))
+}
 
-	var cycle []string
-	var dfs func() bool
-	dfs = func() bool {
-		for succ := range g.successors(top(stack)) {
-			if inStack.has(succ) {
+func cycleStartingAtAnyOfNodes(g *graph, nodes iter.Seq[string]) []string {
+	var path []string
+	nodeToState := make(map[string]nodeState)
+
+	var findCycle func(node string) []string
+	findCycle = func(node string) []string {
+		nodeToState[node] = partiallyVisited
+		path = append(path, node)
+
+		for succ := range g.successors(node) {
+			if nodeToState[succ] == partiallyVisited {
 				// cycle found
-				cycle = append(cycle, popStack())
-				for top(cycle) != succ {
-					cycle = append(cycle, popStack())
-				}
-				slices.Reverse(cycle)
-				return true
+				start := slices.Index(path, succ)
+				cycle := slices.Clone(path[start:])
+				return cycle
 			}
-
-			stack = append(stack, succ)
-			inStack.add(succ)
-			if dfs() {
-				return true
+			if nodeToState[succ] == notVisited {
+				if cycle := findCycle(succ); len(cycle) != 0 {
+					return cycle
+				}
 			}
 		}
 
-		inStack.remove(popStack())
-		return false
+		path = path[:len(path)-1]
+		nodeToState[node] = fullyVisited
+		return nil
 	}
-	dfs()
-	return cycle
-}
 
-func top(s []string) string {
-	return s[len(s)-1]
+	for node := range nodes {
+		if nodeToState[node] != notVisited {
+			continue
+		}
+		if cycle := findCycle(node); len(cycle) != 0 {
+			return cycle
+		}
+	}
+	return nil
 }
 
 func main() {
