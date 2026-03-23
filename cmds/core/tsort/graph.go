@@ -20,32 +20,39 @@ type nodeData struct {
 }
 
 func (g *graph) addNode(node string) {
-	if _, ok := g.nodeToData[node]; !ok {
-		g.nodeToData[node] = &nodeData{
-			inDegree:   0,
-			successors: makeSet(),
-		}
-	}
+	g.addNodeInternal(node)
 }
 
 func (g *graph) putEdge(source, target string) {
-	g.addNode(source)
-	g.addNode(target)
+	sourceData := g.addNodeInternal(source)
+	targetData := g.addNodeInternal(target)
 
-	successors := g.nodeToData[source].successors
+	successors := sourceData.successors
 	if !successors.has(target) {
 		successors.add(target)
-		g.nodeToData[target].inDegree++
+		targetData.inDegree++
 	}
 }
 
+func (g *graph) addNodeInternal(node string) *nodeData {
+	data, ok := g.nodeToData[node]
+	if !ok {
+		data = &nodeData{
+			inDegree:   0,
+			successors: makeSet(),
+		}
+		g.nodeToData[node] = data
+	}
+	return data
+}
+
 func (g *graph) successors(node string) set {
-	n, ok := g.nodeToData[node]
+	data, ok := g.nodeToData[node]
 	if !ok {
 		panic("node is not in graph")
 	}
 
-	return n.successors
+	return data.successors
 }
 
 func (g *graph) removeEdge(source, target string) {
@@ -61,9 +68,9 @@ func (g *graph) removeEdge(source, target string) {
 }
 
 func (g *graph) inDegree(node string) int {
-	n, ok := g.nodeToData[node]
+	data, ok := g.nodeToData[node]
 	if !ok {
 		return 0
 	}
-	return n.inDegree
+	return data.inDegree
 }

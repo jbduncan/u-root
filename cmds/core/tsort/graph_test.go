@@ -12,12 +12,12 @@ import (
 )
 
 func TestGraph(t *testing.T) {
-	testSuccessors(t, fixtureGraph())
-	testInDegree(t, fixtureGraph())
-	testRemoveEdge(t, fixtureGraph())
+	testSuccessors(t, graphFixture())
+	testInDegree(t, graphFixture())
+	testRemoveEdge(t, graphFixture())
 }
 
-func fixtureGraph() *graph {
+func graphFixture() *graph {
 	//    a     b      c   j
 	//   / \   /|\     |
 	//  /   \ / | \    |
