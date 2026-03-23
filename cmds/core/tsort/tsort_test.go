@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -146,7 +147,7 @@ func TestTsort(t *testing.T) {
 		},
 		{
 			name:    "stdin: error-returning stdin",
-			stdin:   &errorReturningReader{err: errDiskCrashed},
+			stdin:   iotest.ErrReader(errDiskCrashed),
 			wantErr: errDiskCrashed,
 		},
 		{
@@ -706,14 +707,6 @@ func cyclesABOrACInAnyOrderAndRotation() []string {
 		"tsort: cycle in data\ntsort: c\ntsort: a\ntsort: cycle in data\ntsort: a\ntsort: b\n",
 		"tsort: cycle in data\ntsort: c\ntsort: a\ntsort: cycle in data\ntsort: b\ntsort: a\n",
 	}
-}
-
-type errorReturningReader struct {
-	err error
-}
-
-func (e *errorReturningReader) Read(_ []byte) (n int, err error) {
-	return 0, e.err
 }
 
 func checkValidTopologicalOrdering(
