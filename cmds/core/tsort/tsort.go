@@ -192,7 +192,7 @@ func topologicalOrdering(
 
 func rootsOf(g *graph) queue {
 	result := queue{}
-	for node := range g.nodeToData {
+	for node := range g.allNodes() {
 		if g.inDegree(node) == 0 {
 			result.enqueue(node)
 		}
@@ -202,7 +202,7 @@ func rootsOf(g *graph) queue {
 
 func nonRootsOf(g *graph) multiset {
 	result := newMultiset()
-	for node := range g.nodeToData {
+	for node := range g.allNodes() {
 		if g.inDegree(node) > 0 {
 			result.add(node, g.inDegree(node))
 		}

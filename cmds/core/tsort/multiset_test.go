@@ -157,6 +157,6 @@ func TestMultisetAllUnique(t *testing.T) {
 		break
 	}
 	if len(values) != 1 {
-		t.Fatalf("expected forEachUnique to break when false is returned")
+		t.Fatalf("expected allUnique to break")
 	}
 }

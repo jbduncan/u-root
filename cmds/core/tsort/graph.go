@@ -4,6 +4,10 @@
 
 package main
 
+import (
+	"iter"
+)
+
 func newGraph() *graph {
 	return &graph{
 		nodeToData: make(map[string]*nodeData),
@@ -73,4 +77,14 @@ func (g *graph) inDegree(node string) int {
 		return 0
 	}
 	return data.inDegree
+}
+
+func (g *graph) allNodes() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for node := range g.nodeToData {
+			if !yield(node) {
+				return
+			}
+		}
+	}
 }

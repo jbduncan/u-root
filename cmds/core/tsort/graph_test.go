@@ -5,6 +5,7 @@
 package main
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ func TestGraph(t *testing.T) {
 	testSuccessors(t, graphFixture())
 	testInDegree(t, graphFixture())
 	testRemoveEdge(t, graphFixture())
+	testAllNodes(t, graphFixture())
 }
 
 func graphFixture() *graph {
@@ -138,5 +140,24 @@ func testRemoveEdge(t *testing.T, g *graph) {
 		t.Errorf(
 			`g.removeEdge("b", "e"): want g.inDegree("e") to be 1, got %d`,
 			g.inDegree("e"))
+	}
+}
+
+func testAllNodes(t *testing.T, g *graph) {
+	actual := slices.Collect(g.allNodes())
+	expected := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
+	if diff := orderInsensitiveDiff(actual, expected); diff != "" {
+		t.Fatalf(
+			"allNodes mismatch (-actual +expected):\n%s",
+			diff)
+	}
+
+	var values []string
+	for value := range g.allNodes() {
+		values = append(values, value)
+		break
+	}
+	if len(values) != 1 {
+		t.Fatalf("expected allNodes to break")
 	}
 }
