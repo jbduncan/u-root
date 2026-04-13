@@ -11,37 +11,37 @@ import (
 
 func newGraph() *graph {
 	return &graph{
-		nodeToData: make(map[string]nodeData),
+		nodeToData: make(map[str]nodeData),
 	}
 }
 
 type graph struct {
-	nodeToData map[string]nodeData
+	nodeToData map[str]nodeData
 }
 
 type nodeData struct {
 	inDegree   int
-	successors set
+	successors set[str]
 }
 
-func (g *graph) addNode(node string) {
+func (g *graph) addNode(node str) {
 	g.addNodeInternal(node)
 }
 
-func (g *graph) addNodeInternal(node string) nodeData {
+func (g *graph) addNodeInternal(node str) nodeData {
 	var data nodeData
 	var ok bool
 	if data, ok = g.nodeToData[node]; !ok {
 		data = nodeData{
 			inDegree:   0,
-			successors: makeSet(),
+			successors: makeSet[str](),
 		}
 		g.nodeToData[node] = data
 	}
 	return data
 }
 
-func (g *graph) putEdge(source, target string) {
+func (g *graph) putEdge(source, target str) {
 	sourceData := g.addNodeInternal(source)
 	targetData := g.addNodeInternal(target)
 
@@ -58,11 +58,11 @@ func (g *graph) nodeCount() int {
 	return len(g.nodeToData)
 }
 
-func (g *graph) nodes() iter.Seq[string] {
+func (g *graph) nodes() iter.Seq[str] {
 	return maps.Keys(g.nodeToData)
 }
 
-func (g *graph) inDegree(node string) int {
+func (g *graph) inDegree(node str) int {
 	data, ok := g.nodeToData[node]
 	if !ok {
 		return 0
@@ -70,7 +70,7 @@ func (g *graph) inDegree(node string) int {
 	return data.inDegree
 }
 
-func (g *graph) successors(node string) iter.Seq[string] {
+func (g *graph) successors(node str) iter.Seq[str] {
 	data, ok := g.nodeToData[node]
 	if !ok {
 		panic("node is not in graph")
@@ -79,7 +79,7 @@ func (g *graph) successors(node string) iter.Seq[string] {
 	return data.successors.all()
 }
 
-func (g *graph) removeNode(node string) {
+func (g *graph) removeNode(node str) {
 	if _, ok := g.nodeToData[node]; !ok {
 		panic("node is not in graph")
 	}
@@ -92,7 +92,7 @@ func (g *graph) removeNode(node string) {
 	delete(g.nodeToData, node)
 }
 
-func (g *graph) removeEdge(source, target string) {
+func (g *graph) removeEdge(source, target str) {
 	sourceData, ok := g.nodeToData[source]
 	if !ok {
 		panic("source node is not in graph")

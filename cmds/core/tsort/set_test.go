@@ -10,7 +10,7 @@ import (
 )
 
 func TestSet(t *testing.T) {
-	s := makeSet()
+	s := makeSet[string]()
 
 	if s.has("a") {
 		t.Errorf(`set %#v: want to not have "a", but did have it`, s)

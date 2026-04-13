@@ -719,7 +719,7 @@ func checkValidTopologicalOrdering(
 
 func nodes(graph string) []string {
 	fields := strings.Fields(graph)
-	s := makeSet()
+	s := makeSet[string]()
 
 	var result []string
 	for _, value := range fields {
@@ -751,8 +751,20 @@ func orderInsensitiveDiff(a []string, b []string) string {
 		a, b, cmpopts.SortSlices(func(x, y string) bool { return x < y }))
 }
 
+func orderInsensitiveDiffByValue(a []str, b []str) string {
+	return cmp.Diff(
+		a,
+		b,
+		cmpopts.SortSlices(
+			func(x, y str) bool {
+				return x.String() < y.String()
+			},
+		),
+	)
+}
+
 func hasDuplicates(values []string) bool {
-	s := makeSet()
+	s := makeSet[string]()
 	for _, value := range values {
 		if s.has(value) {
 			return true

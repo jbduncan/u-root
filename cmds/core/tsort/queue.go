@@ -5,16 +5,16 @@
 package main
 
 type queue struct {
-	q []string
+	q []str
 }
 
-func (q *queue) enqueue(value string) {
+func (q *queue) enqueue(value str) {
 	q.q = append(q.q, value)
 }
 
-func (q *queue) dequeue() (string, bool) {
+func (q *queue) dequeue() (str, bool) {
 	if len(q.q) == 0 {
-		return "", false
+		return str{}, false
 	}
 
 	result := q.q[0]

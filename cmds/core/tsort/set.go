@@ -9,25 +9,25 @@ import (
 	"maps"
 )
 
-type set map[string]struct{}
+type set[V comparable] map[V]struct{}
 
-func makeSet() set {
-	return make(set)
+func makeSet[V comparable]() set[V] {
+	return make(set[V])
 }
 
-func (s set) add(value string) {
+func (s set[V]) add(value V) {
 	s[value] = struct{}{}
 }
 
-func (s set) has(value string) bool {
+func (s set[V]) has(value V) bool {
 	_, ok := s[value]
 	return ok
 }
 
-func (s set) remove(value string) {
+func (s set[V]) remove(value V) {
 	delete(s, value)
 }
 
-func (s set) all() iter.Seq[string] {
+func (s set[V]) all() iter.Seq[V] {
 	return maps.Keys(s)
 }

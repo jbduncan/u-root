@@ -14,21 +14,21 @@ func TestQueue(t *testing.T) {
 		t.Fatalf(`queue %v: want no element to be dequeued, got %q`, q, next)
 	}
 
-	q.enqueue("a")
-	q.enqueue("b")
-	q.enqueue("c")
+	q.enqueue(strOf("a"))
+	q.enqueue(strOf("b"))
+	q.enqueue(strOf("c"))
 
 	next, ok := q.dequeue()
 	if !ok {
 		t.Fatalf(`queue %v: want non-empty queue, got empty queue`, q)
 	}
-	if next != "a" {
+	if next.String() != "a" {
 		t.Fatalf(`queue %v: want dequeued element to be "a", got %q`, q, next)
 	}
-	if next, _ := q.dequeue(); next != "b" {
+	if next, _ := q.dequeue(); next.String() != "b" {
 		t.Fatalf(`queue %v: want dequeued element to be "b", got %q`, q, next)
 	}
-	if next, _ := q.dequeue(); next != "c" {
+	if next, _ := q.dequeue(); next.String() != "c" {
 		t.Fatalf(`queue %v: want dequeued element to be "c", got %q`, q, next)
 	}
 

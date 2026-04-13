@@ -30,24 +30,24 @@ func fixtureGraph() *graph {
 	//       h  i
 	// ...where edges are pointed downwards
 	g := newGraph()
-	g.putEdge("a", "d")
-	g.putEdge("a", "e")
-	g.putEdge("b", "e")
-	g.putEdge("b", "f")
-	g.putEdge("b", "i")
-	g.putEdge("b", "i")
-	g.putEdge("e", "h")
-	g.putEdge("e", "i")
-	g.putEdge("f", "i")
-	g.putEdge("c", "g")
-	g.addNode("j")
+	putEdge(g, "a", "d")
+	putEdge(g, "a", "e")
+	putEdge(g, "b", "e")
+	putEdge(g, "b", "f")
+	putEdge(g, "b", "i")
+	putEdge(g, "b", "i")
+	putEdge(g, "e", "h")
+	putEdge(g, "e", "i")
+	putEdge(g, "f", "i")
+	putEdge(g, "c", "g")
+	addNode(g, "j")
 	return g
 }
 
 func testAllNodes(t *testing.T, g *graph) {
 	got := slices.Collect(g.nodes())
-	want := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	if diff := orderInsensitiveDiff(got, want); diff != "" {
+	want := slice("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+	if diff := orderInsensitiveDiffByValue(got, want); diff != "" {
 		t.Fatalf(
 			"allNodes mismatch (-actual +expected):\n%s",
 			diff)
@@ -59,48 +59,48 @@ func testNodeCount(t *testing.T, g *graph) {
 		t.Errorf("g.nodeCount(): got %d, want %d", got, want)
 	}
 
-	g.addNode("k")
+	addNode(g, "k")
 	if got, want := g.nodeCount(), 11; got != want {
 		t.Errorf("g.nodeCount(): got %d, want %d", got, want)
 	}
 }
 
 func testSuccessors(t *testing.T, g *graph) {
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("a")), []string{"d", "e"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "a"), slice("d", "e")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"a\") +expected):\n%s",
 			diff)
 	}
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("b")), []string{"e", "f", "i"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "b"), slice("e", "f", "i")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"b\") +expected):\n%s",
 			diff)
 	}
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("e")), []string{"h", "i"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "e"), slice("h", "i")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"e\") +expected):\n%s",
 			diff)
 	}
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("f")), []string{"i"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "f"), slice("i")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"f\") +expected):\n%s",
 			diff)
 	}
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("c")), []string{"g"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "c"), slice("g")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"c\") +expected):\n%s",
 			diff)
 	}
-	if got := slices.Collect(g.successors("h")); len(got) > 0 {
+	if got := successors(g, "h"); len(got) > 0 {
 		t.Errorf(`g.successors("h"): want empty, got %v`, got)
 	}
-	if got := slices.Collect(g.successors("i")); len(got) > 0 {
+	if got := successors(g, "i"); len(got) > 0 {
 		t.Errorf(`g.successors("i"): want empty, got %v`, got)
 	}
-	if got := slices.Collect(g.successors("j")); len(got) > 0 {
+	if got := successors(g, "j"); len(got) > 0 {
 		t.Errorf(`g.successors("j"): want empty, got %v`, got)
 	}
-	caughtPanic := catchPanic(func() { g.successors("absent") })
+	caughtPanic := catchPanic(func() { successors(g, "absent") })
 	if caughtPanic == nil ||
 		!strings.Contains(caughtPanic.Error(), "node is not in graph") {
 		t.Errorf(
@@ -110,27 +110,27 @@ func testSuccessors(t *testing.T, g *graph) {
 }
 
 func testInDegree(t *testing.T, g *graph) {
-	if g.inDegree("a") != 0 {
-		t.Errorf(`g.inDegree("a"): want 0, got %d`, g.inDegree("a"))
+	if inDegree(g, "a") != 0 {
+		t.Errorf(`g.inDegree("a"): want 0, got %d`, inDegree(g, "a"))
 	}
-	if g.inDegree("d") != 1 {
-		t.Errorf(`g.inDegree("d"): want 1, got %d`, g.inDegree("d"))
+	if inDegree(g, "d") != 1 {
+		t.Errorf(`g.inDegree("d"): want 1, got %d`, inDegree(g, "d"))
 	}
-	if g.inDegree("e") != 2 {
-		t.Errorf(`g.inDegree("e"): want 2, got %d`, g.inDegree("e"))
+	if inDegree(g, "e") != 2 {
+		t.Errorf(`g.inDegree("e"): want 2, got %d`, inDegree(g, "e"))
 	}
-	if g.inDegree("i") != 3 {
-		t.Errorf(`g.inDegree("i"): want 3, got %d`, g.inDegree("e"))
+	if inDegree(g, "i") != 3 {
+		t.Errorf(`g.inDegree("i"): want 3, got %d`, inDegree(g, "e"))
 	}
-	if g.inDegree("absent-node") != 0 {
+	if inDegree(g, "absent-node") != 0 {
 		t.Errorf(
 			`g.inDegree("absent-node"): want 0, got %d`,
-			g.inDegree("absent-node"))
+			inDegree(g, "absent-node"))
 	}
 }
 
 func testRemoveNode(t *testing.T, g *graph) {
-	caughtPanic := catchPanic(func() { g.removeNode("absent-node") })
+	caughtPanic := catchPanic(func() { removeNode(g, "absent-node") })
 	if caughtPanic == nil ||
 		!strings.Contains(caughtPanic.Error(), "node is not in graph") {
 		t.Errorf(
@@ -138,25 +138,25 @@ func testRemoveNode(t *testing.T, g *graph) {
 			caughtPanic)
 	}
 
-	g.removeNode("j")
-	if diff := orderInsensitiveDiff(
+	removeNode(g, "j")
+	if diff := orderInsensitiveDiffByValue(
 		slices.Collect(g.nodes()),
-		[]string{"a", "b", "c", "d", "e", "f", "g", "h", "i"},
+		slice("a", "b", "c", "d", "e", "f", "g", "h", "i"),
 	); diff != "" {
 		t.Fatalf("g.removeNode(\"j\"): nodes mismatch (-got +want):\n%s", diff)
 	}
 
-	g.removeNode("c")
-	if diff := orderInsensitiveDiff(
+	removeNode(g, "c")
+	if diff := orderInsensitiveDiffByValue(
 		slices.Collect(g.nodes()),
-		[]string{"a", "b", "d", "e", "f", "g", "h", "i"},
+		slice("a", "b", "d", "e", "f", "g", "h", "i"),
 	); diff != "" {
 		t.Errorf("g.removeNode(\"c\"): nodes mismatch (-got +want):\n%s", diff)
 	}
 }
 
 func testRemoveEdge(t *testing.T, g *graph) {
-	caughtPanic := catchPanic(func() { g.removeEdge("absent-source-node", "a") })
+	caughtPanic := catchPanic(func() { removeEdge(g, "absent-source-node", "a") })
 	if caughtPanic == nil ||
 		!strings.Contains(caughtPanic.Error(), "source node is not in graph") {
 		t.Errorf(
@@ -165,7 +165,7 @@ func testRemoveEdge(t *testing.T, g *graph) {
 	}
 	testSuccessors(t, g) // test that there were no changes
 
-	caughtPanic = catchPanic(func() { g.removeEdge("a", "absent-target-node") })
+	caughtPanic = catchPanic(func() { removeEdge(g, "a", "absent-target-node") })
 	if caughtPanic == nil ||
 		!strings.Contains(caughtPanic.Error(), "target node is not in graph") {
 		t.Errorf(
@@ -174,22 +174,54 @@ func testRemoveEdge(t *testing.T, g *graph) {
 	}
 	testSuccessors(t, g) // test that there were no changes
 
-	g.removeEdge("b", "e")
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("b")), []string{"f", "i"}); diff != "" {
+	removeEdge(g, "b", "e")
+	if diff := orderInsensitiveDiffByValue(successors(g, "b"), slice("f", "i")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"b\") +expected):\n%s",
 			diff)
 	}
-	if diff := orderInsensitiveDiff(slices.Collect(g.successors("e")), []string{"h", "i"}); diff != "" {
+	if diff := orderInsensitiveDiffByValue(successors(g, "e"), slice("h", "i")); diff != "" {
 		t.Errorf(
 			"set mismatch (-g.successors(\"e\") +expected):\n%s",
 			diff)
 	}
-	if g.inDegree("e") != 1 {
+	if inDegree(g, "e") != 1 {
 		t.Errorf(
 			`g.removeEdge("b", "e"): want g.inDegree("e") to be 1, got %d`,
-			g.inDegree("e"))
+			inDegree(g, "e"))
 	}
+}
+
+func slice(values ...string) []str {
+	result := make([]str, 0, len(values))
+	for _, value := range values {
+		result = append(result, strOf(value))
+	}
+	return result
+}
+
+func putEdge(g *graph, source string, target string) {
+	g.putEdge(strOf(source), strOf(target))
+}
+
+func addNode(g *graph, node string) {
+	g.addNode(strOf(node))
+}
+
+func successors(g *graph, node string) []str {
+	return slices.Collect(g.successors(strOf(node)))
+}
+
+func inDegree(g *graph, node string) int {
+	return g.inDegree(strOf(node))
+}
+
+func removeNode(g *graph, node string) {
+	g.removeNode(strOf(node))
+}
+
+func removeEdge(g *graph, source string, target string) {
+	g.removeEdge(strOf(source), strOf(target))
 }
 
 func catchPanic(f func()) (caughtPanic error) {

@@ -100,10 +100,10 @@ func run(
 
 	topologicalOrdering(
 		g,
-		func(node string) {
+		func(node str) {
 			fmt.Fprintf(stdout, "%v\n", node)
 		},
-		func(cycle []string) {
+		func(cycle []str) {
 			fmt.Fprintf(stderr, "tsort: %v\n", "cycle in data")
 			for _, node := range cycle {
 				fmt.Fprintf(stderr, "tsort: %v\n", node)
@@ -118,12 +118,12 @@ func parseInto(buf string, g *graph) error {
 	var i int
 	var odd bool
 
-	next := func() (string, bool) {
+	next := func() (str, bool) {
 		if i == len(fields) {
-			return "", false
+			return str{}, false
 		}
 		odd = !odd
-		result := fields[i]
+		result := strOf(fields[i])
 		i++
 		return result, true
 	}
@@ -155,14 +155,14 @@ func parseInto(buf string, g *graph) error {
 
 func topologicalOrdering(
 	g *graph,
-	f func(node string),
-	cycles func(cycle []string),
+	f func(node str),
+	cycles func(cycle []str),
 ) {
 	// Variant of Kahn's algorithm that returns an ordering even for graphs
 	// with cycles.
 	roots := rootsOf(g)
 	for g.nodeCount() != 0 {
-		var next string
+		var next str
 		next, roots = dequeueBreakingCycleIfNeeded(roots, g, cycles)
 		f(next)
 		for succ := range g.successors(next) {
@@ -188,8 +188,8 @@ func rootsOf(g *graph) queue {
 func dequeueBreakingCycleIfNeeded(
 	roots queue,
 	g *graph,
-	cycles func(cycle []string),
-) (string, queue) {
+	cycles func(cycle []str),
+) (str, queue) {
 	for {
 		if next, ok := roots.dequeue(); ok {
 			return next, roots
@@ -212,17 +212,17 @@ func dequeueBreakingCycleIfNeeded(
 	}
 }
 
-func findCycle(g *graph) []string {
-	var stack []string
-	visited := makeSet()
+func findCycle(g *graph) []str {
+	var stack []str
+	visited := makeSet[str]()
 
-	popStack := func() string {
-		var result string
+	popStack := func() str {
+		var result str
 		result, stack = stack[len(stack)-1], stack[:len(stack)-1]
 		return result
 	}
 
-	var cycle []string
+	var cycle []str
 	var dfs func() bool
 	dfs = func() bool {
 		for succ := range g.successors(top(stack)) {
@@ -249,7 +249,7 @@ func findCycle(g *graph) []string {
 
 	for node := range g.nodes() {
 		if !visited.has(node) {
-			stack = []string{node}
+			stack = []str{node}
 			visited.add(node)
 			if dfs() {
 				return cycle
@@ -260,7 +260,7 @@ func findCycle(g *graph) []string {
 	panic("unreachable")
 }
 
-func top(s []string) string {
+func top(s []str) str {
 	return s[len(s)-1]
 }
 
