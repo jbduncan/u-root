@@ -470,7 +470,7 @@ func randomDirectedCyclicGraph(nodeRange uint) string {
 }
 
 func BenchmarkTsortAcyclicGraph(b *testing.B) {
-	b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
+	//b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
 	benchmarkCases := []struct {
 		name         string
 		acyclicGraph func() string
@@ -544,7 +544,7 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 }
 
 func BenchmarkTsortCyclicGraph(b *testing.B) {
-	b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
+	//b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
 	benchmarkCases := []struct {
 		name        string
 		cyclicGraph func() string
