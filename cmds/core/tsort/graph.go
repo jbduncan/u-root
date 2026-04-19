@@ -11,12 +11,12 @@ import (
 
 func newGraph() *graph {
 	return &graph{
-		nodeToData: make(map[string]*nodeData),
+		nodeToData: make(map[string]nodeData),
 	}
 }
 
 type graph struct {
-	nodeToData map[string]*nodeData
+	nodeToData map[string]nodeData
 }
 
 type nodeData struct {
@@ -25,22 +25,32 @@ type nodeData struct {
 }
 
 func (g *graph) addNode(node string) {
-	if _, ok := g.nodeToData[node]; !ok {
-		g.nodeToData[node] = &nodeData{
+	g.addNodeInternal(node)
+}
+
+func (g *graph) addNodeInternal(node string) nodeData {
+	var data nodeData
+	var ok bool
+	if data, ok = g.nodeToData[node]; !ok {
+		data = nodeData{
 			inDegree:   0,
 			successors: makeSet(),
 		}
+		g.nodeToData[node] = data
 	}
+	return data
 }
 
 func (g *graph) putEdge(source, target string) {
-	g.addNode(source)
-	g.addNode(target)
+	sourceData := g.addNodeInternal(source)
+	targetData := g.addNodeInternal(target)
 
-	successors := g.nodeToData[source].successors
-	if !successors.has(target) {
-		successors.add(target)
-		g.nodeToData[target].inDegree++
+	if !sourceData.successors.has(target) {
+		sourceData.successors.add(target)
+		g.nodeToData[target] = nodeData{
+			inDegree:   targetData.inDegree + 1,
+			successors: targetData.successors,
+		}
 	}
 }
 
@@ -93,5 +103,8 @@ func (g *graph) removeEdge(source, target string) {
 	}
 
 	sourceData.successors.remove(target)
-	targetData.inDegree--
+	g.nodeToData[target] = nodeData{
+		inDegree:   targetData.inDegree - 1,
+		successors: targetData.successors,
+	}
 }
