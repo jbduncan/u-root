@@ -473,66 +473,48 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	//b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
 	benchmarkCases := []struct {
 		name         string
-		acyclicGraph func() string
+		acyclicGraph string
 	}{
 		{
-			name: "small sparse directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10)/2)
-			},
+			name:         "small sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10)/2),
 		},
 		{
-			name: "small edgeless directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(10, 0)
-			},
+			name:         "small edgeless directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(10, 0),
 		},
 		{
-			name: "small tournament directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10))
-			},
+			name:         "small tournament directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10)),
 		},
 		{
-			name: "medium sparse directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100)/2)
-			},
+			name:         "medium sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100)/2),
 		},
 		{
-			name: "medium edgeless directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(100, 0)
-			},
+			name:         "medium edgeless directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(100, 0),
 		},
 		{
-			name: "medium tournament directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100))
-			},
+			name:         "medium tournament directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100)),
 		},
 		{
-			name: "large sparse directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000)/2)
-			},
+			name:         "large sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000)/2),
 		},
 		{
-			name: "large edgeless directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(1_000, 0)
-			},
+			name:         "large edgeless directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, 0),
 		},
 		{
-			name: "large tournament directed acyclic graph",
-			acyclicGraph: func() string {
-				return randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000))
-			},
+			name:         "large tournament directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000)),
 		},
 	}
 	for _, bc := range benchmarkCases {
 		b.Run(bc.name, func(b *testing.B) {
-			g := bc.acyclicGraph()
+			g := bc.acyclicGraph
 			for b.Loop() {
 				err := run(strings.NewReader(g), io.Discard, io.Discard)
 				if err != nil {
@@ -547,31 +529,25 @@ func BenchmarkTsortCyclicGraph(b *testing.B) {
 	//b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
 	benchmarkCases := []struct {
 		name        string
-		cyclicGraph func() string
+		cyclicGraph string
 	}{
 		{
-			name: "small cyclic graph",
-			cyclicGraph: func() string {
-				return randomDirectedCyclicGraph(10)
-			},
+			name:        "small cyclic graph",
+			cyclicGraph: randomDirectedCyclicGraph(10),
 		},
 		{
-			name: "medium cyclic graph",
-			cyclicGraph: func() string {
-				return randomDirectedCyclicGraph(50)
-			},
+			name:        "medium cyclic graph",
+			cyclicGraph: randomDirectedCyclicGraph(50),
 		},
 		{
-			name: "large cyclic graph",
-			cyclicGraph: func() string {
-				return randomDirectedCyclicGraph(100)
-			},
+			name:        "large cyclic graph",
+			cyclicGraph: randomDirectedCyclicGraph(100),
 		},
 	}
 
 	for _, bc := range benchmarkCases {
 		b.Run(bc.name, func(b *testing.B) {
-			g := bc.cyclicGraph()
+			g := bc.cyclicGraph
 			for b.Loop() {
 				err := run(strings.NewReader(g), io.Discard, io.Discard)
 				if err != nil && !errors.Is(err, errNonFatal) {
