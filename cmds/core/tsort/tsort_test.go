@@ -261,6 +261,10 @@ func TestTsort(t *testing.T) {
 			name: "directed acyclic graph: a d a e b e b f e h e i f i c g",
 			g:    "a d a e b e b f e h e i f i c g",
 		},
+		{
+			name: "line: range [0-100_000]",
+			g:    gen.SeqFrom0To(100_000),
+		},
 	}
 	for _, tt := range directedAcyclicGraphTests {
 		t.Run(fmt.Sprintf("stdin: %s", tt.name), func(t *testing.T) {
@@ -366,6 +370,17 @@ func TestTsort(t *testing.T) {
 	}
 
 	t.Run("stdin: diamond and cycle: a b a c b d c d b e e f f b", func(t *testing.T) {
+		//    a
+		//   / \
+		//  b   c
+		//  |\  |
+		//  | \ |
+		//  |   d
+		//  e
+		//  |
+		//  f--->b (cycle back)
+		// ...where vertical edges are pointing downwards
+
 		stdin := strings.NewReader("a b a c b d c d b e e f f b")
 		stdout := new(strings.Builder)
 		stderr := new(strings.Builder)
@@ -688,11 +703,10 @@ func checkValidTopologicalOrdering(
 }
 
 func nodes(graph string) []string {
-	fields := strings.Fields(graph)
-	s := makeSet()
-
 	var result []string
-	for _, value := range fields {
+
+	s := makeSet()
+	for value := range strings.FieldsSeq(graph) {
 		if !s.has(value) {
 			s.add(value)
 			result = append(result, value)
