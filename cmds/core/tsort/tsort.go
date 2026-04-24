@@ -101,10 +101,10 @@ func run(
 	topologicalOrdering(
 		g,
 		func(node str) {
-			fmt.Fprintf(stdout, "%v\n", node)
+			fmt.Fprintln(stdout, node)
 		},
 		func(cycle []str) {
-			fmt.Fprintf(stderr, "tsort: %v\n", "cycle in data")
+			fmt.Fprintln(stderr, "tsort: cycle in data")
 			for _, node := range cycle {
 				fmt.Fprintf(stderr, "tsort: %v\n", node)
 			}
@@ -166,8 +166,7 @@ func topologicalOrdering(
 		next, roots = dequeueBreakingCycleIfNeeded(roots, g, cycles)
 		f(next)
 		for succ := range g.successors(next) {
-			g.removeEdge(next, succ)
-			if g.inDegree(succ) == 0 {
+			if newInDegree := g.decreaseInDegree(succ); newInDegree == 0 {
 				roots.enqueue(succ)
 			}
 		}

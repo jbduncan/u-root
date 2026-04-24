@@ -84,11 +84,17 @@ func (g *graph) removeNode(node str) {
 		panic("node is not in graph")
 	}
 
-	// In a general-purpose graph type, the predecessors and successors of
-	// the given node would need to be amended too. But this type only tracks
-	// in-degrees and successors, so it would take O(N) time to find all of the
-	// predecessors and amend them. Therefore, this method "cheats" and only
-	// removes the given node, which is good enough for tsort.
+	// In a general-purpose graph type, removing a node would also require
+	// updating all predecessors' successor lists. This would be O(N) since
+	// we don't track predecessors, so every node would need to be looped over
+	// to figure out which ones are the predecessors.
+	//
+	// However, this optimization is safe for the variant of Kahn's algorithm
+	// used in tsort.go because we follow a strict dequeue-process-delete
+	// pattern (see decreaseInDegree for more information). We never query the
+	// predecessors of the remaining nodes (only successors, which are
+	// tracked). So even though the graph state becomes incomplete, it suffices
+	// for the algorithm's needs.
 	delete(g.nodeToData, node)
 }
 
@@ -107,4 +113,39 @@ func (g *graph) removeEdge(source, target str) {
 		inDegree:   targetData.inDegree - 1,
 		successors: targetData.successors,
 	}
+}
+
+func (g *graph) decreaseInDegree(node str) int {
+	// Optimization for the variant of Kahn's algorithm used in tsort.go.
+	// Unlike the standard algorithm (which removes edges), this variant
+	// decreases in-degrees and immediately removes processed nodes. These
+	// design choices enable early cycle detection: when the queue empties but
+	// nodes remain, a cycle exists.
+	//
+	// The decreaseInDegree optimization is safe because of these choices:
+	// 1. We dequeue a root node (in-degree 0)
+	// 2. Decrement in-degrees of its successors  <- we are here
+	// 3. Immediately remove the dequeued node via removeNode()
+	//
+	// Since we delete dequeued nodes before the next iteration, we never
+	// query predecessors of remaining nodes. In-degree values alone suffice
+	// to identify new roots. This avoids the O(N) cost of maintaining
+	// predecessor links (which this graph implementation doesn't track).
+	//
+	// WARNING: This optimization depends on the immediate dequeue-process-delete
+	// pattern. Code that breaks this pattern (e.g., deferring node removal or
+	// querying predecessors) will cause algorithm failure.
+
+	data, ok := g.nodeToData[node]
+	if !ok {
+		panic("target node is not in graph")
+	}
+
+	newInDegree := data.inDegree - 1
+	g.nodeToData[node] = nodeData{
+		inDegree:   newInDegree,
+		successors: data.successors,
+	}
+
+	return newInDegree
 }
