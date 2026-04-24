@@ -262,6 +262,10 @@ func TestTsort(t *testing.T) {
 			name: "directed acyclic graph: a d a e b e b f e h e i f i c g",
 			g:    "a d a e b e b f e h e i f i c g",
 		},
+		{
+			name: "line: range [0-100_000]",
+			g:    seqFrom0To(100_000),
+		},
 	}
 	for _, tt := range directedAcyclicGraphTests {
 		t.Run(fmt.Sprintf("stdin: %s", tt.name), func(t *testing.T) {
@@ -367,6 +371,17 @@ func TestTsort(t *testing.T) {
 	}
 
 	t.Run("stdin: diamond and cycle: a b a c b d c d b e e f f b", func(t *testing.T) {
+		//    a
+		//   / \
+		//  b   c
+		//  |\  |
+		//  | \ |
+		//  |   d
+		//  e
+		//  |
+		//  f--->b (cycle back)
+		// ...where vertical edges are pointing downwards
+
 		stdin := strings.NewReader("a b a c b d c d b e e f f b")
 		stdout := new(strings.Builder)
 		stderr := new(strings.Builder)
@@ -411,6 +426,14 @@ func TestTsort(t *testing.T) {
 				gotStdout)
 		}
 	})
+}
+
+func seqFrom0To(size uint) string {
+	result := new(strings.Builder)
+	for i := uint(0); i < size-1; i++ {
+		_, _ = fmt.Fprintln(result, i, i+1)
+	}
+	return result.String()
 }
 
 var (
@@ -555,6 +578,19 @@ func BenchmarkTsortCyclicGraph(b *testing.B) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkStressTest(b *testing.B) {
+	// Stress test the implementation to make sure it can handle humongous
+	// graphs without crashing.
+	g := seqFrom0To(10_000_000)
+
+	for b.Loop() {
+		err := run(strings.NewReader(g), io.Discard, io.Discard)
+		if err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
 	}
 }
 
@@ -718,11 +754,10 @@ func checkValidTopologicalOrdering(
 }
 
 func nodes(graph string) []string {
-	fields := strings.Fields(graph)
-	s := makeSet()
-
 	var result []string
-	for _, value := range fields {
+
+	s := makeSet()
+	for value := range strings.FieldsSeq(graph) {
 		if !s.has(value) {
 			s.add(value)
 			result = append(result, value)
