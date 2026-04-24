@@ -11,87 +11,47 @@ import (
 
 func newGraph() *graph {
 	return &graph{
-		nodeToData: make(map[string]*nodeData),
+		nodeToSuccessors: make(map[string]set),
 	}
 }
 
 type graph struct {
-	nodeToData map[string]*nodeData
-}
-
-type nodeData struct {
-	inDegree   int
-	successors set
+	nodeToSuccessors map[string]set
 }
 
 func (g *graph) addNode(node string) {
-	if _, ok := g.nodeToData[node]; !ok {
-		g.nodeToData[node] = &nodeData{
-			inDegree:   0,
-			successors: makeSet(),
-		}
+	_ = g.addNodeInternal(node)
+}
+
+func (g *graph) addNodeInternal(node string) set {
+	data, ok := g.nodeToSuccessors[node]
+	if !ok {
+		data = makeSet()
+		g.nodeToSuccessors[node] = data
 	}
+
+	return data
 }
 
 func (g *graph) putEdge(source, target string) {
-	g.addNode(source)
-	g.addNode(target)
+	sourceData := g.addNodeInternal(source)
+	_ = g.addNodeInternal(target)
 
-	successors := g.nodeToData[source].successors
-	if !successors.has(target) {
-		successors.add(target)
-		g.nodeToData[target].inDegree++
-	}
+	sourceData.add(target)
 }
 
 func (g *graph) nodeCount() int {
-	return len(g.nodeToData)
+	return len(g.nodeToSuccessors)
 }
 
 func (g *graph) nodes() iter.Seq[string] {
-	return maps.Keys(g.nodeToData)
-}
-
-func (g *graph) inDegree(node string) int {
-	data, ok := g.nodeToData[node]
-	if !ok {
-		return 0
-	}
-	return data.inDegree
+	return maps.Keys(g.nodeToSuccessors)
 }
 
 func (g *graph) successors(node string) iter.Seq[string] {
-	data, ok := g.nodeToData[node]
-	if !ok {
-		panic("node is not in graph")
-	}
-
-	return data.successors.all()
-}
-
-func (g *graph) removeNode(node string) {
-	if _, ok := g.nodeToData[node]; !ok {
-		panic("node is not in graph")
-	}
-
-	// In a general-purpose graph type, the predecessors and successors of
-	// the given node would need to be amended too. But this type only tracks
-	// in-degrees and successors, so it would take O(N) time to find all of the
-	// predecessors and amend them. Therefore, this method "cheats" and only
-	// removes the given node, which is good enough for tsort.
-	delete(g.nodeToData, node)
+	return g.nodeToSuccessors[node].all()
 }
 
 func (g *graph) removeEdge(source, target string) {
-	sourceData, ok := g.nodeToData[source]
-	if !ok {
-		panic("source node is not in graph")
-	}
-	targetData, ok := g.nodeToData[target]
-	if !ok {
-		panic("target node is not in graph")
-	}
-
-	sourceData.successors.remove(target)
-	targetData.inDegree--
+	g.nodeToSuccessors[source].remove(target)
 }

@@ -246,7 +246,7 @@ func TestTsort(t *testing.T) {
 			//  b   c
 			//   \ /
 			//    d
-			// ...where edges are pointed downwards
+			// ...where edges are pointing downwards
 			name: "diamond: a b a c b d c d",
 			g:    "a b a c b d c d",
 		},
@@ -258,7 +258,7 @@ func TestTsort(t *testing.T) {
 			//       |\   /
 			//       | \ /
 			//       h  i
-			// ...where edges are pointed downwards
+			// ...where edges are pointing downwards
 			name: "directed acyclic graph: a d a e b e b f e h e i f i c g",
 			g:    "a d a e b e b f e h e i f i c g",
 		},
