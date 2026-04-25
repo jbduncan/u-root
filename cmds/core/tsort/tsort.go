@@ -115,39 +115,17 @@ func run(
 
 func parseInto(buf string, g *graph) error {
 	fields := strings.Fields(buf)
-	var i int
-	var odd bool
-
-	next := func() (string, bool) {
-		if i == len(fields) {
-			return "", false
-		}
-		odd = !odd
-		result := fields[i]
-		i++
-		return result, true
+	if len(fields)%2 == 1 {
+		return errOddDataCount
 	}
 
-	for {
-		a, ok := next()
-		if !ok {
-			break
-		}
-
-		b, ok := next()
-		if !ok {
-			break
-		}
-
+	for i := 0; i < len(fields); i += 2 {
+		a, b := fields[i], fields[i+1]
 		if a == b {
 			g.addNode(a)
 		} else {
 			g.putEdge(a, b)
 		}
-	}
-
-	if odd {
-		return errOddDataCount
 	}
 
 	return nil
@@ -158,8 +136,9 @@ func topologicalOrdering(
 	f func(node string),
 	cycles func(cycle []string),
 ) {
-	// Variant of depth-first search version of topological ordering by
-	// Cormen et al. that returns an ordering even for graphs with cycles.
+	// A topological ordering algorithm based on the depth-first search
+	// algorithm by Cormen et al. It returns an ordering even for graphs with
+	// cycles by breaking cycles when they are found.
 
 	type visitState int
 	const (
@@ -169,8 +148,7 @@ func topologicalOrdering(
 	)
 
 	var path []string
-	index := g.nodeCount() - 1
-	result := make([]string, g.nodeCount())
+	result := make([]string, 0, g.nodeCount())
 	nodeToVisitState := make(map[string]visitState, g.nodeCount())
 
 	var doTopologicalOrdering func(node string)
@@ -188,7 +166,7 @@ func topologicalOrdering(
 				idx := slices.Index(path, succ)
 				cycle := path[idx:]
 				cycles(cycle)
-				g.removeEdge(succ, node)
+				g.removeEdge(node, succ)
 			case fullyVisited:
 				continue
 			}
@@ -197,8 +175,7 @@ func topologicalOrdering(
 		path = path[:len(path)-1]
 		nodeToVisitState[node] = fullyVisited
 
-		result[index] = node
-		index--
+		result = append(result, node)
 	}
 
 	for node := range g.nodes() {
@@ -207,7 +184,7 @@ func topologicalOrdering(
 		}
 	}
 
-	for _, node := range result {
+	for _, node := range slices.Backward(result) {
 		f(node)
 	}
 }
