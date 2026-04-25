@@ -743,9 +743,13 @@ func checkValidTopologicalOrdering(
 		t.Errorf("topological ordering has duplicates: %q", topoNodes)
 	}
 
+	positions := make(map[string]int, len(topoNodes))
+	for i, node := range topoNodes {
+		positions[node] = i
+	}
+
 	for _, e := range edges(graph) {
-		if slices.Index(topoNodes, e.source) >=
-			slices.Index(topoNodes, e.target) {
+		if positions[e.source] >= positions[e.target] {
 			t.Errorf(
 				"topological ordering invalid: %q is not before %q",
 				e.source, e.target)
