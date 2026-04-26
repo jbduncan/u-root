@@ -147,40 +147,85 @@ func topologicalOrdering(
 		fullyVisited
 	)
 
+	type stackFrame struct {
+		node       string
+		succs      []string
+		idx        int
+		finalizing bool
+	}
+
 	var path []string
+	var stack []stackFrame
 	result := make([]string, 0, g.nodeCount())
 	nodeToVisitState := make(map[string]visitState, g.nodeCount())
 
-	var doTopologicalOrdering func(node string)
-	doTopologicalOrdering = func(node string) {
-		nodeToVisitState[node] = partiallyVisited
+	topologicalOrderingStartingFrom := func(node string) {
 		path = append(path, node)
+		stack = append(stack,
+			stackFrame{
+				node:       node,
+				finalizing: true,
+			},
+			stackFrame{
+				node:       node,
+				succs:      slices.Collect(g.successors(node)),
+				idx:        0,
+				finalizing: false,
+			},
+		)
+		nodeToVisitState[node] = partiallyVisited
 
-		for succ := range g.successors(node) {
+		for len(stack) > 0 {
+			frame := stack[len(stack)-1]
+
+			if frame.finalizing {
+				path = path[:len(path)-1]
+				stack = stack[:len(stack)-1]
+				result = append(result, frame.node)
+				nodeToVisitState[frame.node] = fullyVisited
+				continue
+			}
+
+			if frame.idx == len(frame.succs) {
+				stack = stack[:len(stack)-1]
+				continue
+			}
+
+			succ := frame.succs[frame.idx]
 			switch nodeToVisitState[succ] {
 			case notVisited:
-				doTopologicalOrdering(succ)
+				path = append(path, succ)
+				stack = append(
+					stack,
+					stackFrame{
+						node:       succ,
+						finalizing: true,
+					},
+					stackFrame{
+						node:       succ,
+						succs:      slices.Collect(g.successors(succ)),
+						idx:        0,
+						finalizing: false,
+					},
+				)
+				nodeToVisitState[succ] = partiallyVisited
 			case partiallyVisited:
 				// Cycle detected; report it, break it and
 				// continue as if the cycle never existed.
 				idx := slices.Index(path, succ)
 				cycle := path[idx:]
 				cycles(cycle)
-				g.removeEdge(node, succ)
+				g.removeEdge(frame.node, succ)
+				stack[len(stack)-1].idx++
 			case fullyVisited:
-				continue
+				stack[len(stack)-1].idx++
 			}
 		}
-
-		path = path[:len(path)-1]
-		nodeToVisitState[node] = fullyVisited
-
-		result = append(result, node)
 	}
 
 	for node := range g.nodes() {
 		if nodeToVisitState[node] != fullyVisited {
-			doTopologicalOrdering(node)
+			topologicalOrderingStartingFrom(node)
 		}
 	}
 
