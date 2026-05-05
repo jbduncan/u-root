@@ -9,25 +9,20 @@ import (
 	"maps"
 )
 
-type set map[string]struct{}
+type set map[int]struct{}
 
 func makeSet() set {
 	return make(set)
 }
 
-func (s set) add(value string) {
+func (s set) add(value int) {
 	s[value] = struct{}{}
 }
 
-func (s set) has(value string) bool {
-	_, ok := s[value]
-	return ok
-}
-
-func (s set) remove(value string) {
+func (s set) remove(value int) {
 	delete(s, value)
 }
 
-func (s set) all() iter.Seq[string] {
+func (s set) all() iter.Seq[int] {
 	return maps.Keys(s)
 }

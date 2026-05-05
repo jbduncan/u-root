@@ -11,19 +11,19 @@ import (
 
 func newGraph() *graph {
 	return &graph{
-		nodeToSuccessors: make(map[string]set),
+		nodeToSuccessors: make(map[int]set),
 	}
 }
 
 type graph struct {
-	nodeToSuccessors map[string]set
+	nodeToSuccessors map[int]set
 }
 
-func (g *graph) addNode(node string) {
+func (g *graph) addNode(node int) {
 	_ = g.addNodeInternal(node)
 }
 
-func (g *graph) addNodeInternal(node string) set {
+func (g *graph) addNodeInternal(node int) set {
 	data, ok := g.nodeToSuccessors[node]
 	if !ok {
 		data = makeSet()
@@ -33,7 +33,7 @@ func (g *graph) addNodeInternal(node string) set {
 	return data
 }
 
-func (g *graph) putEdge(source, target string) {
+func (g *graph) putEdge(source, target int) {
 	sourceData := g.addNodeInternal(source)
 	_ = g.addNodeInternal(target)
 
@@ -44,14 +44,14 @@ func (g *graph) nodeCount() int {
 	return len(g.nodeToSuccessors)
 }
 
-func (g *graph) nodes() iter.Seq[string] {
+func (g *graph) nodes() iter.Seq[int] {
 	return maps.Keys(g.nodeToSuccessors)
 }
 
-func (g *graph) successors(node string) iter.Seq[string] {
+func (g *graph) successors(node int) iter.Seq[int] {
 	return g.nodeToSuccessors[node].all()
 }
 
-func (g *graph) removeEdge(source, target string) {
+func (g *graph) removeEdge(source, target int) {
 	g.nodeToSuccessors[source].remove(target)
 }

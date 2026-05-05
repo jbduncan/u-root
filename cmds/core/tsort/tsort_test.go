@@ -18,6 +18,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/u-root/u-root/cmds/core/tsort/gen"
+	"golang.org/x/exp/constraints"
 )
 
 var errDiskCrashed = errors.New("disk crashed")
@@ -709,10 +710,10 @@ func checkValidTopologicalOrdering(
 func nodes(graph string) []string {
 	var result []string
 
-	s := makeSet()
+	s := make(map[string]struct{})
 	for value := range strings.FieldsSeq(graph) {
-		if !s.has(value) {
-			s.add(value)
+		if _, ok := s[value]; !ok {
+			s[value] = struct{}{}
 			result = append(result, value)
 		}
 	}
@@ -734,18 +735,18 @@ func edges(graph string) []edge {
 	return result
 }
 
-func orderInsensitiveDiff(a []string, b []string) string {
+func orderInsensitiveDiff[T constraints.Ordered](a []T, b []T) string {
 	return cmp.Diff(
-		a, b, cmpopts.SortSlices(func(x, y string) bool { return x < y }))
+		a, b, cmpopts.SortSlices(func(x, y T) bool { return x < y }))
 }
 
 func hasDuplicates(values []string) bool {
-	s := makeSet()
+	s := make(map[string]struct{})
 	for _, value := range values {
-		if s.has(value) {
+		if _, ok := s[value]; ok {
 			return true
 		}
-		s.add(value)
+		s[value] = struct{}{}
 	}
 	return false
 }

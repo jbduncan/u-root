@@ -9,73 +9,34 @@ import (
 	"testing"
 )
 
-func TestSet(t *testing.T) {
+func TestIntSet(t *testing.T) {
 	s := makeSet()
 
-	if s.has("a") {
-		t.Errorf(`set %#v: want to not have "a", but did have it`, s)
-	}
 	if len(s) != 0 {
 		t.Errorf(`set %#v: want len of 0, got %d`, s, len(s))
 	}
 
-	s.add("b")
-	s.add("d")
-	s.add("c")
-	s.add("c")
-	s.add("e")
-	s.add("a")
+	s.add(2)
+	s.add(4)
+	s.add(3)
+	s.add(3)
+	s.add(5)
+	s.add(1)
 
-	if !s.has("a") {
-		t.Errorf(`set %#v: want to have "a", but did not`, s)
-	}
-	if !s.has("b") {
-		t.Errorf(`set %#v: want to have "b", but did not`, s)
-	}
-	if !s.has("c") {
-		t.Errorf(`set %#v: want to have "c", but did not`, s)
-	}
-	if !s.has("d") {
-		t.Errorf(`set %#v: want to have "d", but did not`, s)
-	}
-	if !s.has("e") {
-		t.Errorf(`set %#v: want to have "e", but did not`, s)
-	}
-	if s.has("absent-value") {
-		t.Errorf(`set %#v: want to not have "absent-value", but did have it`, s)
-	}
 	if diff := orderInsensitiveDiff(
 		slices.Collect(s.all()),
-		[]string{"a", "b", "c", "d", "e"},
+		[]int{1, 2, 3, 4, 5},
 	); diff != "" {
 		t.Errorf("set iterator mismatch (-got +want):\n%s", diff)
 	}
 
-	s.remove("a")
-	s.remove("e")
-	s.remove("c")
+	s.remove(1)
+	s.remove(5)
+	s.remove(3)
 
-	if s.has("a") {
-		t.Errorf(`set %#v: want to not have "a", but did have it`, s)
-	}
-	if !s.has("b") {
-		t.Errorf(`set %#v: want to have "b", but did not`, s)
-	}
-	if s.has("c") {
-		t.Errorf(`set %#v: want to not have "c", but did have it`, s)
-	}
-	if !s.has("d") {
-		t.Errorf(`set %#v: want to have "d", but did not`, s)
-	}
-	if s.has("e") {
-		t.Errorf(`set %#v: want to not have "e", but did have it`, s)
-	}
-	if s.has("absent-value") {
-		t.Errorf(`set %#v: want to not have "absent-value", but did have it`, s)
-	}
 	if diff := orderInsensitiveDiff(
 		slices.Collect(s.all()),
-		[]string{"b", "d"},
+		[]int{2, 4},
 	); diff != "" {
 		t.Errorf("set iterator mismatch (-got +want):\n%s", diff)
 	}

@@ -94,34 +94,34 @@ func run(
 	}
 
 	g := newGraph()
-	if err = parseInto(buf.String(), g); err != nil {
+	ia := newIDAssigner()
+	if err = parseInto(buf.String(), g, ia); err != nil {
 		return err
 	}
 
 	topologicalOrdering(
 		g,
-		func(node string) {
-			fmt.Fprintln(stdout, node)
+		func(node int) {
+			_, _ = fmt.Fprintln(stdout, ia.valueFor(node))
 		},
-		func(cycle []string) {
-			fmt.Fprintln(stderr, "tsort: cycle in data")
+		func(cycle []int) {
+			_, _ = fmt.Fprintln(stderr, "tsort: cycle in data")
 			for _, node := range cycle {
-				fmt.Fprintf(stderr, "tsort: %v\n", node)
+				_, _ = fmt.Fprintln(stderr, "tsort:", ia.valueFor(node))
 			}
 			err = errNonFatal
 		})
 	return err
 }
 
-func parseInto(buf string, g *graph) error {
+func parseInto(buf string, g *graph, ia *idAssigner) error {
 	fields := strings.Fields(buf)
 	if len(fields)%2 == 1 {
 		return errOddDataCount
 	}
 
 	for i := 0; i < len(fields); i += 2 {
-		a, b := fields[i], fields[i+1]
-		if a == b {
+		if a, b := ia.assignID(fields[i]), ia.assignID(fields[i+1]); a == b {
 			g.addNode(a)
 		} else {
 			g.putEdge(a, b)
@@ -133,26 +133,26 @@ func parseInto(buf string, g *graph) error {
 
 func topologicalOrdering(
 	g *graph,
-	f func(node string),
-	cycles func(cycle []string),
+	f func(node int),
+	cycles func(cycle []int),
 ) {
 	// A topological ordering algorithm based on the depth-first search
 	// algorithm by Cormen et al. It returns an ordering even for graphs with
 	// cycles by breaking cycles when they are found.
 
-	type visitState int
+	type visitState int8
 	const (
 		notVisited visitState = iota
 		partiallyVisited
 		fullyVisited
 	)
 
-	var path []string
-	result := make([]string, 0, g.nodeCount())
-	nodeToVisitState := make(map[string]visitState, g.nodeCount())
+	var path []int
+	result := make([]int, 0, g.nodeCount())
+	nodeToVisitState := make([]visitState, g.nodeCount())
 
-	var doTopologicalOrdering func(node string)
-	doTopologicalOrdering = func(node string) {
+	var doTopologicalOrdering func(node int)
+	doTopologicalOrdering = func(node int) {
 		nodeToVisitState[node] = partiallyVisited
 		path = append(path, node)
 
