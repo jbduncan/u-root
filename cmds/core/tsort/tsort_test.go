@@ -477,6 +477,10 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	}{
 		{
 			name:         "small sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10)/10),
+		},
+		{
+			name:         "small half-total-edges directed acyclic graph",
 			acyclicGraph: randomDirectedAcyclicGraph(10, maxEdgesForDirectedAcyclicGraph(10)/2),
 		},
 		{
@@ -489,6 +493,10 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 		},
 		{
 			name:         "medium sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100)/10),
+		},
+		{
+			name:         "medium half-total-edges directed acyclic graph",
 			acyclicGraph: randomDirectedAcyclicGraph(100, maxEdgesForDirectedAcyclicGraph(100)/2),
 		},
 		{
@@ -501,6 +509,10 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 		},
 		{
 			name:         "large sparse directed acyclic graph",
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000)/10),
+		},
+		{
+			name:         "large half-total-edges directed acyclic graph",
 			acyclicGraph: randomDirectedAcyclicGraph(1_000, maxEdgesForDirectedAcyclicGraph(1_000)/2),
 		},
 		{
