@@ -115,19 +115,25 @@ func run(
 }
 
 func parseInto(buf string, g *graph, ia *idAssigner) error {
-	fields := strings.Fields(buf)
-	if len(fields)%2 == 1 {
+	var prev string
+	var odd bool
+	for field := range strings.FieldsSeq(buf) {
+		if odd {
+			if a, b := ia.assignID(prev), ia.assignID(field); a == b {
+				g.addNode(a)
+			} else {
+				g.putEdge(a, b)
+			}
+		} else {
+			prev = field
+		}
+
+		odd = !odd
+	}
+
+	if odd {
 		return errOddDataCount
 	}
-
-	for i := 0; i < len(fields); i += 2 {
-		if a, b := ia.assignID(fields[i]), ia.assignID(fields[i+1]); a == b {
-			g.addNode(a)
-		} else {
-			g.putEdge(a, b)
-		}
-	}
-
 	return nil
 }
 
