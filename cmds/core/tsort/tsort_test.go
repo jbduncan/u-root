@@ -737,7 +737,11 @@ func edges(graph string) []edge {
 
 func orderInsensitiveDiff[T constraints.Ordered](a []T, b []T) string {
 	return cmp.Diff(
-		a, b, cmpopts.SortSlices(func(x, y T) bool { return x < y }))
+		a,
+		b,
+		cmpopts.SortSlices(func(x, y T) bool { return x < y }),
+		cmpopts.EquateEmpty(),
+	)
 }
 
 func hasDuplicates(values []string) bool {
