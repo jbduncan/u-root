@@ -94,35 +94,34 @@ func run(
 	}
 
 	g := newGraph()
-	ia := newIDAssigner()
-	if err = parseInto(buf.String(), g, ia); err != nil {
+	if err = parseInto(buf.String(), g); err != nil {
 		return err
 	}
 
 	topologicalOrdering(
 		g,
-		func(node int) {
-			_, _ = fmt.Fprintln(stdout, ia.valueFor(node))
+		func(node nodeID) {
+			_, _ = fmt.Fprintln(stdout, g.valueFor(node))
 		},
-		func(cycle []int) {
+		func(cycle []nodeID) {
 			_, _ = fmt.Fprintln(stderr, "tsort: cycle in data")
 			for _, node := range cycle {
-				_, _ = fmt.Fprintln(stderr, "tsort:", ia.valueFor(node))
+				_, _ = fmt.Fprintln(stderr, "tsort: "+g.valueFor(node))
 			}
 			err = errNonFatal
 		})
 	return err
 }
 
-func parseInto(buf string, g *graph, ia *idAssigner) error {
+func parseInto(buf string, g *graph) error {
 	var prev string
 	var odd bool
 	for field := range strings.FieldsSeq(buf) {
 		if odd {
-			if a, b := ia.assignID(prev), ia.assignID(field); a == b {
-				g.addNode(a)
+			if prev == field {
+				g.addNode(prev)
 			} else {
-				g.putEdge(a, b)
+				g.putEdge(prev, field)
 			}
 		} else {
 			prev = field
@@ -139,8 +138,8 @@ func parseInto(buf string, g *graph, ia *idAssigner) error {
 
 func topologicalOrdering(
 	g *graph,
-	f func(node int),
-	cycles func(cycle []int),
+	f func(node nodeID),
+	cycles func(cycle []nodeID),
 ) {
 	// A topological ordering algorithm based on the depth-first search
 	// algorithm by Cormen et al. It returns an ordering even for graphs with
@@ -153,16 +152,16 @@ func topologicalOrdering(
 		fullyVisited
 	)
 
-	var path []int
-	result := make([]int, 0, g.nodeCount())
+	var path []nodeID
+	result := make([]nodeID, 0, g.nodeCount())
 	nodeToVisitState := make([]visitState, g.nodeCount())
 
-	var doTopologicalOrdering func(node int)
-	doTopologicalOrdering = func(node int) {
+	var doTopologicalOrdering func(node nodeID)
+	doTopologicalOrdering = func(node nodeID) {
 		nodeToVisitState[node] = partiallyVisited
 		path = append(path, node)
 
-		for succ := range g.successors(node) {
+		for succ := range g.successorIDs(node) {
 			switch nodeToVisitState[succ] {
 			case notVisited:
 				doTopologicalOrdering(succ)
@@ -184,7 +183,7 @@ func topologicalOrdering(
 		result = append(result, node)
 	}
 
-	for node := range g.nodes() {
+	for node := range g.nodeIDs() {
 		if nodeToVisitState[node] != fullyVisited {
 			doTopologicalOrdering(node)
 		}
