@@ -15,7 +15,7 @@ func TestGraph(t *testing.T) {
 	testNodeIDs(t, graphFixture())
 	testNodeCount(t, graphFixture())
 	testSuccessorIDs(t, graphFixture())
-	testRemoveEdge(t, graphFixture())
+	testRemoveEdge(t)
 }
 
 func graphFixture() *graph {
@@ -126,20 +126,29 @@ func testSuccessorIDs(t *testing.T, g *graph) {
 	}
 }
 
-func testRemoveEdge(t *testing.T, g *graph) {
-	t.Run("g.removeEdge", func(t *testing.T) {
+func testRemoveEdge(t *testing.T) {
+	t.Run("g.removeEdge(42, 1)", func(t *testing.T) {
+		g := graphFixture()
 		g.removeEdge(42, 1)
 		testSuccessorIDs(t, g) // test that there were no changes
-
+	})
+	t.Run("g.removeEdge(1, 42)", func(t *testing.T) {
+		g := graphFixture()
 		g.removeEdge(1, 42)
 		testSuccessorIDs(t, g) // test that there were no changes
-
+	})
+	t.Run("g.removeEdge(-1, 1)", func(t *testing.T) {
+		g := graphFixture()
 		g.removeEdge(-1, 1)
 		testSuccessorIDs(t, g) // test that there were no changes
-
+	})
+	t.Run("g.removeEdge(1, -1)", func(t *testing.T) {
+		g := graphFixture()
 		g.removeEdge(1, -1)
 		testSuccessorIDs(t, g) // test that there were no changes
-
+	})
+	t.Run("g.removeEdge(3, 2)", func(t *testing.T) {
+		g := graphFixture()
 		g.removeEdge(3, 2)
 		if diff := orderInsensitiveDiff(slices.Collect(g.successorIDs(3)), []nodeID{4, 5}); diff != "" {
 			t.Errorf("mismatch (-g.successorIDs(3) +expected):\n%s", diff)

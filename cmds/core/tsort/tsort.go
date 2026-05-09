@@ -58,6 +58,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -78,11 +79,13 @@ func run(
 	stderr io.Writer,
 	args ...string,
 ) error {
+	out := bufio.NewWriter(stdout)
+	defer out.Flush()
+
 	var err error
 	in := io.NopCloser(stdin)
 	if len(args) >= 1 {
-		in, err = os.Open(args[0])
-		if err != nil {
+		if in, err = os.Open(args[0]); err != nil {
 			return err
 		}
 	}
@@ -101,7 +104,9 @@ func run(
 	topologicalOrdering(
 		g,
 		func(node nodeID) {
-			_, _ = fmt.Fprintln(stdout, g.valueFor(node))
+			// More optimal than fmt.Fprintln
+			_, _ = out.WriteString(g.valueFor(node))
+			_ = out.WriteByte('\n')
 		},
 		func(cycle []nodeID) {
 			_, _ = fmt.Fprintln(stderr, "tsort: cycle in data")
@@ -142,8 +147,10 @@ func topologicalOrdering(
 	cycles func(cycle []nodeID),
 ) {
 	// A topological ordering algorithm based on the depth-first search
-	// algorithm by Cormen et al. It returns an ordering even for graphs with
-	// cycles by breaking cycles when they are found.
+	// algorithm in "Introduction to Algorithms" by Cormen et al.
+	//
+	// Unlike normal topological ordering, it returns an ordering even for
+	// cyclic graphs by breaking cycles when they are found.
 
 	type visitState int8
 	const (

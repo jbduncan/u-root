@@ -9,6 +9,12 @@ import (
 	"slices"
 )
 
+// nodeID is an efficient handle for a node that was added to a graph. nodeID
+// values are contiguous, in strictly increasing order and within the range of
+// [0..len(graph.nodeCount())].
+//
+// To get the original value associated with a nodeID, call
+// graph.valueFor(nodeID).
 type nodeID int32
 
 func newGraph() *graph {
@@ -35,8 +41,8 @@ func (g *graph) addNodeInternal(node string) nodeID {
 	}
 
 	id := nodeID(len(g.idToNode))
-	g.idToNode = append(g.idToNode, node)
 	g.nodeToID[node] = id
+	g.idToNode = append(g.idToNode, node)
 
 	g.nodeIDToSuccessorIDs = append(g.nodeIDToSuccessorIDs, make([]nodeID, 0))
 
@@ -76,14 +82,13 @@ func (g *graph) successorIDs(id nodeID) iter.Seq[nodeID] {
 }
 
 func (g *graph) removeEdge(sourceID, targetID nodeID) {
-	sourceIDInt := int(sourceID)
-	if !(0 <= sourceIDInt && sourceIDInt < len(g.nodeIDToSuccessorIDs)) {
+	if !(0 <= sourceID && int(sourceID) < len(g.nodeIDToSuccessorIDs)) {
 		return
 	}
-	succs := g.nodeIDToSuccessorIDs[sourceIDInt]
+	succs := g.nodeIDToSuccessorIDs[sourceID]
 	idx := slices.Index(succs, targetID)
 	if idx == -1 {
 		return
 	}
-	g.nodeIDToSuccessorIDs[sourceIDInt] = slices.Delete(succs, idx, idx+1)
+	g.nodeIDToSuccessorIDs[sourceID] = slices.Delete(succs, idx, idx+1)
 }

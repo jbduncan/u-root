@@ -169,13 +169,13 @@ func TestTsort(t *testing.T) {
 			gotErr := run(tt.stdin, stdout, stderr, tt.args...)
 
 			if !errors.Is(gotErr, tt.wantErr) {
-				t.Errorf(`run() gotErr = %q, want %q`, gotErr, tt.wantErr)
+				t.Errorf(`gotErr = %q, want %q`, gotErr, tt.wantErr)
 			}
 
 			gotStderr := stderr.String()
 			if gotStderr != tt.wantStderr {
 				t.Errorf(
-					"run() gotStderr = %q, want %q",
+					"gotStderr = %q, want %q",
 					gotStderr,
 					tt.wantStderr)
 			}
@@ -183,7 +183,7 @@ func TestTsort(t *testing.T) {
 			gotStdout := stdout.String()
 			if gotStdout != tt.wantStdout {
 				t.Errorf(
-					"run() gotStdout = %q, want %q",
+					"gotStdout = %q, want %q",
 					gotStdout,
 					tt.wantStdout)
 			}
@@ -198,17 +198,17 @@ func TestTsort(t *testing.T) {
 		gotErr := run(stdin, stdout, stderr, "non-existent-file")
 
 		if gotErr == nil || !strings.Contains(gotErr.Error(), "non-existent-file") {
-			t.Errorf(`run() gotErr = %q, want <nil>`, gotErr)
+			t.Errorf(`gotErr = %q, want <nil>`, gotErr)
 		}
 
 		gotStderr := stderr.String()
 		if len(gotStderr) > 0 {
-			t.Errorf(`run() gotStderr = %q, want empty string`, gotStderr)
+			t.Errorf(`gotStderr = %q, want empty string`, gotStderr)
 		}
 
 		gotStdout := stdout.String()
 		if len(gotStdout) > 0 {
-			t.Errorf("run() gotStdout = %q, want empty string", gotStdout)
+			t.Errorf("gotStdout = %q, want empty string", gotStdout)
 		}
 	})
 
@@ -276,12 +276,12 @@ func TestTsort(t *testing.T) {
 			gotErr := run(stdin, stdout, stderr)
 
 			if gotErr != nil {
-				t.Errorf(`run() gotErr = %q, want <nil>`, gotErr)
+				t.Errorf(`gotErr = %q, want <nil>`, gotErr)
 			}
 
 			gotStderr := stderr.String()
 			if gotStderr != "" {
-				t.Errorf(`run() gotStderr = %q, want ""`, gotStderr)
+				t.Errorf(`gotStderr = %q, want ""`, gotStderr)
 			}
 
 			checkValidTopologicalOrdering(t, tt.g, stdout)
@@ -349,13 +349,13 @@ func TestTsort(t *testing.T) {
 			gotErr := run(stdin, stdout, stderr)
 
 			if !errors.Is(gotErr, errNonFatal) {
-				t.Errorf(`run() gotErr = %q, want %q`, gotErr, errNonFatal)
+				t.Errorf(`gotErr = %q, want %q`, gotErr, errNonFatal)
 			}
 
 			gotStderr := stderr.String()
 			if !slices.Contains(tt.wantStderrAnyOf, gotStderr) {
 				t.Errorf(
-					"run() gotStderr = %q, want any of %q",
+					"gotStderr = %q, want any of %q",
 					gotStderr,
 					tt.wantStderrAnyOf)
 			}
@@ -363,7 +363,7 @@ func TestTsort(t *testing.T) {
 			gotStdout := stdout.String()
 			if !slices.Contains(tt.wantStdoutAnyOf, gotStdout) {
 				t.Errorf(
-					"run() gotStdout = %q, want any of %q",
+					"gotStdout = %q, want any of %q",
 					gotStdout,
 					tt.wantStdoutAnyOf)
 			}
@@ -389,14 +389,14 @@ func TestTsort(t *testing.T) {
 		gotErr := run(stdin, stdout, stderr)
 
 		if !errors.Is(gotErr, errNonFatal) {
-			t.Errorf(`run() gotErr = %q, want %q`, gotErr, errNonFatal)
+			t.Errorf(`gotErr = %q, want %q`, gotErr, errNonFatal)
 		}
 
 		gotStderr := stderr.String()
 		wantStderrAnyOf := cycleBEFInAnyRotation()
 		if !slices.Contains(wantStderrAnyOf, gotStderr) {
 			t.Errorf(
-				"run() gotStderr = %q, want any of %q",
+				"gotStderr = %q, want any of %q",
 				gotStderr,
 				wantStderrAnyOf)
 		}
