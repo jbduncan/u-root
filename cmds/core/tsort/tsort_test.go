@@ -251,7 +251,7 @@ func TestTsort(t *testing.T) {
 			g:    "a b a c b d c d",
 		},
 		{
-			//    a     b      c
+			//    a     b      c  j
 			//   / \   / \     |
 			//  /   \ /   \    |
 			// d     e     f   g
@@ -259,8 +259,8 @@ func TestTsort(t *testing.T) {
 			//       | \ /
 			//       h  i
 			// ...where edges are pointing downwards
-			name: "directed acyclic graph: a d a e b e b f e h e i f i c g",
-			g:    "a d a e b e b f e h e i f i c g",
+			name: "directed acyclic graph: a d a e b e b f e h e i f i c g j j",
+			g:    "a d a e b e b f e h e i f i c g j j",
 		},
 		{
 			name: "line: range [0-100_000]",
