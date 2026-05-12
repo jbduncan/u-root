@@ -12,6 +12,17 @@ var (
 )
 
 func SeqFrom0To(size uint) string {
+	// When size is 0, size-1 in the loop below underflows to math.MaxUint,
+	// which produces a very large sequence; an empty sequence should be
+	// produced instead.
+	if size == 0 {
+		return ""
+	}
+	// When size is 1, the loop below produces zero edges; a one-node sequence
+	// should be produced instead.
+	if size == 1 {
+		return "0 0"
+	}
 	result := new(strings.Builder)
 	for i := uint(0); i < size-1; i++ {
 		_, _ = fmt.Fprintln(result, i, i+1)
