@@ -370,82 +370,71 @@ func TestTsort(t *testing.T) {
 		})
 	}
 
-	t.Run("stdin: diamond and cycle: a b a c b d c d b e e f f b", func(t *testing.T) {
-		//    a
-		//   / \
-		//  b   c
-		//  |\  |
-		//  | \ |
-		//  |   d
-		//  e
-		//  |
-		//  f--->b (cycle back)
-		// ...where vertical edges are pointing downwards
+	directedGraphWithCycleTests := []struct {
+		name                     string
+		g                        string
+		wantStdoutToRespectEdges []edge
+		wantStderrAnyOf          []string
+	}{
+		{
+			//    a
+			//   / \
+			//  b   c
+			//  |\  |
+			//  | \ |
+			//  |   d
+			//  e
+			//  |
+			//  f--->b (cycle back)
+			// ...where vertical edges are pointing downwards
+			name:                     "stdin: diamond and cycle: a b a c b d c d b e e f f b",
+			g:                        "a b a c b d c d b e e f f b",
+			wantStdoutToRespectEdges: []edge{{"a", "b"}, {"a", "c"}, {"b", "d"}, {"c", "d"}},
+			wantStderrAnyOf:          cycleBEFInAnyRotation(),
+		},
+		{
+			//    a
+			//   / \
+			//  b   f
+			//  |
+			//  c--->a (cycle back)
+			//  |\
+			//  d e
+			// ...where vertical edges are pointing downwards
+			name:                     "stdin: directed graph with cycle: a b b c c a c d c e a f",
+			g:                        "a b b c c a c d c e a f",
+			wantStdoutToRespectEdges: []edge{{"a", "f"}, {"c", "d"}, {"c", "e"}},
+			wantStderrAnyOf:          cycleABCInAnyRotation(),
+		},
+	}
+	for _, tt := range directedGraphWithCycleTests {
+		t.Run(tt.name, func(t *testing.T) {
+			stdin := strings.NewReader(tt.g)
+			stdout := new(strings.Builder)
+			stderr := new(strings.Builder)
 
-		g := "a b a c b d c d b e e f f b"
-		stdin := strings.NewReader(g)
-		stdout := new(strings.Builder)
-		stderr := new(strings.Builder)
+			gotErr := run(stdin, stdout, stderr)
 
-		gotErr := run(stdin, stdout, stderr)
+			if !errors.Is(gotErr, errNonFatal) {
+				t.Errorf("gotErr = %q, want %q", gotErr, errNonFatal)
+			}
 
-		if !errors.Is(gotErr, errNonFatal) {
-			t.Errorf(`gotErr = %q, want %q`, gotErr, errNonFatal)
-		}
+			gotStderr := stderr.String()
+			if !slices.Contains(tt.wantStderrAnyOf, gotStderr) {
+				t.Errorf(
+					"gotStderr = %q, want any of %q",
+					gotStderr,
+					tt.wantStderrAnyOf)
+			}
 
-		gotStderr := stderr.String()
-		wantStderrAnyOf := cycleBEFInAnyRotation()
-		if !slices.Contains(wantStderrAnyOf, gotStderr) {
-			t.Errorf(
-				"gotStderr = %q, want any of %q",
-				gotStderr,
-				wantStderrAnyOf)
-		}
-
-		checkValidSoftTopologicalOrdering(
-			t,
-			g,
-			stdout,
-			[]edge{{"a", "b"}, {"a", "c"}, {"b", "d"}, {"c", "d"}},
-		)
-	})
-
-	t.Run("stdin: directed graph with cycle: a b b c c a c d c e a f", func(t *testing.T) {
-		//    a
-		//   / \
-		//  b   f
-		//  |
-		//  c--->a (cycle back)
-		//  |\
-		//  d e
-		// ...where vertical edges are pointing downwards
-		g := "a b b c c a c d c e a f"
-		stdin := strings.NewReader(g)
-		stdout := new(strings.Builder)
-		stderr := new(strings.Builder)
-
-		gotErr := run(stdin, stdout, stderr)
-
-		if !errors.Is(gotErr, errNonFatal) {
-			t.Errorf(`gotErr = %q, want %q`, gotErr, errNonFatal)
-		}
-
-		gotStderr := stderr.String()
-		wantStderrAnyOf := cycleABCInAnyRotation()
-		if !slices.Contains(wantStderrAnyOf, gotStderr) {
-			t.Errorf(
-				"gotStderr = %q, want any of %q",
-				gotStderr,
-				wantStderrAnyOf)
-		}
-
-		checkValidSoftTopologicalOrdering(
-			t,
-			g,
-			stdout,
-			[]edge{{"a", "f"}, {"c", "d"}, {"c", "e"}},
-		)
-	})
+			checkValidSoftTopologicalOrdering(
+				t,
+				tt.g,
+				stdout,
+				tt.wantStdoutToRespectEdges,
+			)
+		})
+	}
 }
 
 func BenchmarkTsortAcyclicGraph(b *testing.B) {
@@ -707,7 +696,7 @@ func checkValidSoftTopologicalOrdering(
 	t *testing.T,
 	graph string,
 	topologicalOrdering fmt.Stringer,
-	edges []edge,
+	shouldRespectEdges []edge,
 ) {
 	graphNodes := nodes(graph)
 	topoNodes := strings.Fields(topologicalOrdering.String())
@@ -727,7 +716,7 @@ func checkValidSoftTopologicalOrdering(
 		positions[node] = i
 	}
 
-	for _, e := range edges {
+	for _, e := range shouldRespectEdges {
 		if positions[e.source] >= positions[e.target] {
 			t.Errorf(
 				"topological ordering invalid: %q is not before %q",
