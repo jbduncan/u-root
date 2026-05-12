@@ -159,6 +159,10 @@ func topologicalOrdering(
 		fullyVisited
 	)
 
+	type edge struct {
+		source, target nodeID
+	}
+
 	var path []nodeID
 	result := make([]nodeID, 0, g.nodeCount())
 	nodeToVisitState := make([]visitState, g.nodeCount())
@@ -168,20 +172,27 @@ func topologicalOrdering(
 		nodeToVisitState[node] = partiallyVisited
 		path = append(path, node)
 
+		var edgesToRemove []edge
 		for _, succ := range g.successorIDs(node) {
 			switch nodeToVisitState[succ] {
 			case notVisited:
 				doTopologicalOrdering(succ)
 			case partiallyVisited:
-				// Cycle detected; report it, break it and
-				// continue as if the cycle never existed.
+				// Cycle detected; report it, break it later, and continue as
+				// if the cycle never existed.
 				idx := slices.Index(path, succ)
 				cycle := path[idx:]
 				cycles(cycle)
-				g.removeEdge(node, succ)
+				edgesToRemove = append(
+					edgesToRemove,
+					edge{source: node, target: succ},
+				)
 			case fullyVisited:
 				continue
 			}
+		}
+		for _, e := range edgesToRemove {
+			g.removeEdge(e.source, e.target)
 		}
 
 		path = path[:len(path)-1]
