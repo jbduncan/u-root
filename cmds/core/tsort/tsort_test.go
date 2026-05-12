@@ -728,9 +728,14 @@ type edge struct {
 
 func edges(graph string) []edge {
 	var result []edge
-	nodes := strings.Fields(graph)
-	for i := 0; i < len(nodes); i += 2 {
-		result = append(result, edge{source: nodes[i], target: nodes[i+1]})
+	ns := strings.Fields(graph)
+	for i := 0; i < len(ns); i += 2 {
+		if ns[i] == ns[i+1] {
+			// skip self-loop edges like 'edge{"a", "a"}', because tsort
+			// treats them as single nodes rather than proper edges.
+			continue
+		}
+		result = append(result, edge{source: ns[i], target: ns[i+1]})
 	}
 	return result
 }
