@@ -574,7 +574,7 @@ func bcdInAnyOrder() []string {
 		"c\nb\nd\n",
 		"c\nd\nb\n",
 		"d\nb\nc\n",
-		"d\nc\nd\n",
+		"d\nc\nb\n",
 	}
 }
 
