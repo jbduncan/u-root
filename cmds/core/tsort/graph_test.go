@@ -118,7 +118,7 @@ func testSuccessorIDs(t *testing.T, g *graph) {
 		t.Run(
 			fmt.Sprintf("g.successorIDs(%d) == %v", tt.id, tt.successors),
 			func(t *testing.T) {
-				if diff := orderInsensitiveDiff(slices.Collect(g.successorIDs(tt.id)), tt.successors); diff != "" {
+				if diff := orderInsensitiveDiff(g.successorIDs(tt.id), tt.successors); diff != "" {
 					t.Errorf("mismatch (-g.successorIDs(%d) +expected):\n%s", tt.id, diff)
 				}
 			},
@@ -150,7 +150,7 @@ func testRemoveEdge(t *testing.T) {
 	t.Run("g.removeEdge(3, 2)", func(t *testing.T) {
 		g := graphFixture()
 		g.removeEdge(3, 2)
-		if diff := orderInsensitiveDiff(slices.Collect(g.successorIDs(3)), []nodeID{4, 5}); diff != "" {
+		if diff := orderInsensitiveDiff(g.successorIDs(3), []nodeID{4, 5}); diff != "" {
 			t.Errorf("mismatch (-g.successorIDs(3) +expected):\n%s", diff)
 		}
 	})

@@ -168,7 +168,7 @@ func topologicalOrdering(
 		nodeToVisitState[node] = partiallyVisited
 		path = append(path, node)
 
-		for succ := range g.successorIDs(node) {
+		for _, succ := range g.successorIDs(node) {
 			switch nodeToVisitState[succ] {
 			case notVisited:
 				doTopologicalOrdering(succ)

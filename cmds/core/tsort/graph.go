@@ -77,8 +77,8 @@ func (g *graph) nodeIDs() iter.Seq[nodeID] {
 	}
 }
 
-func (g *graph) successorIDs(id nodeID) iter.Seq[nodeID] {
-	return slices.Values(g.nodeIDToSuccessorIDs[id])
+func (g *graph) successorIDs(id nodeID) []nodeID {
+	return slices.Clone(g.nodeIDToSuccessorIDs[id])
 }
 
 func (g *graph) removeEdge(sourceID, targetID nodeID) {

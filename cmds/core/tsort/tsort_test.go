@@ -382,7 +382,8 @@ func TestTsort(t *testing.T) {
 		//  f--->b (cycle back)
 		// ...where vertical edges are pointing downwards
 
-		stdin := strings.NewReader("a b a c b d c d b e e f f b")
+		g := "a b a c b d c d b e e f f b"
+		stdin := strings.NewReader(g)
 		stdout := new(strings.Builder)
 		stderr := new(strings.Builder)
 
@@ -401,30 +402,49 @@ func TestTsort(t *testing.T) {
 				wantStderrAnyOf)
 		}
 
-		gotStdout := stdout.String()
-		fields := strings.Fields(gotStdout)
-		if len(fields) != 6 {
+		checkValidSoftTopologicalOrdering(
+			t,
+			g,
+			stdout,
+			[]edge{{"a", "b"}, {"a", "c"}, {"b", "d"}, {"c", "d"}},
+		)
+	})
+
+	t.Run("stdin: directed graph with cycle: a b b c c a c d c e a f", func(t *testing.T) {
+		//    a
+		//   / \
+		//  b   f
+		//  |
+		//  c--->a (cycle back)
+		//  |\
+		//  d e
+		// ...where vertical edges are pointing downwards
+		g := "a b b c c a c d c e a f"
+		stdin := strings.NewReader(g)
+		stdout := new(strings.Builder)
+		stderr := new(strings.Builder)
+
+		gotErr := run(stdin, stdout, stderr)
+
+		if !errors.Is(gotErr, errNonFatal) {
+			t.Errorf(`gotErr = %q, want %q`, gotErr, errNonFatal)
+		}
+
+		gotStderr := stderr.String()
+		wantStderrAnyOf := cycleABCInAnyRotation()
+		if !slices.Contains(wantStderrAnyOf, gotStderr) {
 			t.Errorf(
-				`topological ordering invalid: want 6 elements, got %d elements: %q`,
-				len(fields), gotStdout)
+				"gotStderr = %q, want any of %q",
+				gotStderr,
+				wantStderrAnyOf)
 		}
-		for _, e := range []edge{{"a", "b"}, {"a", "c"}, {"b", "d"}, {"c", "d"}} {
-			if slices.Index(fields, e.source) >= slices.Index(fields, e.target) {
-				t.Errorf(
-					`gotStdout %q: topological ordering invalid: %v is not before %v`,
-					gotStdout, e.source, e.target)
-			}
-		}
-		if !slices.Contains(fields, "e") {
-			t.Errorf(
-				`gotStdout %q: topological ordering invalid: did not contain "e"`,
-				gotStdout)
-		}
-		if !slices.Contains(fields, "f") {
-			t.Errorf(
-				`gotStdout %q: topological ordering invalid: did not contain "f"`,
-				gotStdout)
-		}
+
+		checkValidSoftTopologicalOrdering(
+			t,
+			g,
+			stdout,
+			[]edge{{"a", "f"}, {"c", "d"}, {"c", "e"}},
+		)
 	})
 }
 
@@ -680,6 +700,15 @@ func checkValidTopologicalOrdering(
 	graph string,
 	topologicalOrdering fmt.Stringer,
 ) {
+	checkValidSoftTopologicalOrdering(t, graph, topologicalOrdering, edges(graph))
+}
+
+func checkValidSoftTopologicalOrdering(
+	t *testing.T,
+	graph string,
+	topologicalOrdering fmt.Stringer,
+	edges []edge,
+) {
 	graphNodes := nodes(graph)
 	topoNodes := strings.Fields(topologicalOrdering.String())
 
@@ -698,7 +727,7 @@ func checkValidTopologicalOrdering(
 		positions[node] = i
 	}
 
-	for _, e := range edges(graph) {
+	for _, e := range edges {
 		if positions[e.source] >= positions[e.target] {
 			t.Errorf(
 				"topological ordering invalid: %q is not before %q",
