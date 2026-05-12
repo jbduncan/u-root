@@ -708,17 +708,8 @@ func checkValidTopologicalOrdering(
 }
 
 func nodes(graph string) []string {
-	var result []string
-
-	s := make(map[string]struct{})
-	for value := range strings.FieldsSeq(graph) {
-		if _, ok := s[value]; !ok {
-			s[value] = struct{}{}
-			result = append(result, value)
-		}
-	}
-
-	return result
+	result := slices.Sorted(strings.FieldsSeq(graph))
+	return slices.Compact(result)
 }
 
 type edge struct {
