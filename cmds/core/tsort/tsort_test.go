@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"slices"
@@ -17,7 +19,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/u-root/u-root/cmds/core/tsort/gen"
 	"golang.org/x/exp/constraints"
 )
 
@@ -263,8 +264,8 @@ func TestTsort(t *testing.T) {
 			g:    "a d a e b e b f e h e i f i c g j j",
 		},
 		{
-			name: "line: range [0-100_000]",
-			g:    gen.SeqFrom0To(100_000),
+			name: "line: range [0-4]",
+			g:    "0 1 1 2 2 3 3 4",
 		},
 	}
 	for _, tt := range directedAcyclicGraphTests {
@@ -279,8 +280,7 @@ func TestTsort(t *testing.T) {
 				t.Errorf(`gotErr = %q, want <nil>`, gotErr)
 			}
 
-			gotStderr := stderr.String()
-			if gotStderr != "" {
+			if gotStderr := stderr.String(); gotStderr != "" {
 				t.Errorf(`gotStderr = %q, want ""`, gotStderr)
 			}
 
@@ -445,51 +445,51 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	}{
 		{
 			name:         "small sparse directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(10, 0.1),
+			acyclicGraph: randomDirectedAcyclicGraph(10, 0.1),
 		},
 		{
 			name:         "small half-total-edges directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(10, 0.5),
+			acyclicGraph: randomDirectedAcyclicGraph(10, 0.5),
 		},
 		{
 			name:         "small edgeless directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(10, 0.0),
+			acyclicGraph: randomDirectedAcyclicGraph(10, 0.0),
 		},
 		{
 			name:         "small tournament directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(10, 1.0),
+			acyclicGraph: randomDirectedAcyclicGraph(10, 1.0),
 		},
 		{
 			name:         "medium sparse directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(100, 0.1),
+			acyclicGraph: randomDirectedAcyclicGraph(100, 0.1),
 		},
 		{
 			name:         "medium half-total-edges directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(100, 0.5),
+			acyclicGraph: randomDirectedAcyclicGraph(100, 0.5),
 		},
 		{
 			name:         "medium edgeless directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(100, 0),
+			acyclicGraph: randomDirectedAcyclicGraph(100, 0),
 		},
 		{
 			name:         "medium tournament directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(100, 1.0),
+			acyclicGraph: randomDirectedAcyclicGraph(100, 1.0),
 		},
 		{
 			name:         "large sparse directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(1_000, 0.1),
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, 0.1),
 		},
 		{
 			name:         "large half-total-edges directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(1_000, 0.5),
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, 0.5),
 		},
 		{
 			name:         "large edgeless directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(1_000, 0.0),
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, 0.0),
 		},
 		{
 			name:         "large tournament directed acyclic graph",
-			acyclicGraph: gen.RandomDirectedAcyclicGraph(1_000, 1.0),
+			acyclicGraph: randomDirectedAcyclicGraph(1_000, 1.0),
 		},
 	}
 	for _, bc := range benchmarkCases {
@@ -505,6 +505,52 @@ func BenchmarkTsortAcyclicGraph(b *testing.B) {
 	}
 }
 
+var (
+	rnd = rand.New(rand.NewPCG(1, 1))
+)
+
+func randomDirectedAcyclicGraph(nodeCount uint16, edgeCountRatio float64) string {
+	if edgeCountRatio < 0.0 || edgeCountRatio > 1.0 {
+		panic(fmt.Sprintf(
+			"edgeCountRatio %v must be between 0.0 and 1.0",
+			edgeCountRatio,
+		))
+	}
+
+	totalPossibleEdges := maxEdgesForDirectedAcyclicGraph(nodeCount)
+	edgeCount := uint(math.Round(float64(totalPossibleEdges) * edgeCountRatio))
+
+	// filled with `false` by default
+	randomEdges := make([]bool, totalPossibleEdges)
+	for i := range edgeCount {
+		randomEdges[i] = true
+	}
+	rnd.Shuffle(len(randomEdges), func(i, j int) {
+		randomEdges[i], randomEdges[j] = randomEdges[j], randomEdges[i]
+	})
+
+	result := new(strings.Builder)
+	for i := uint16(0); i < nodeCount; i++ {
+		_, _ = fmt.Fprintln(result, i, i)
+	}
+	index := 0
+	for i := uint16(0); i < nodeCount-1; i++ {
+		for j := i + 1; j < nodeCount; j++ {
+			if randomEdges[index] {
+				_, _ = fmt.Fprintln(result, i, j)
+			}
+			index++
+		}
+	}
+	return result.String()
+}
+
+// For any directed acyclic graph, the maximum number of edges is equal to (n * (n - 1) / 2),
+// where n is the number of nodes in the graph.
+func maxEdgesForDirectedAcyclicGraph(nodeCount uint16) uint {
+	return uint(nodeCount) * (uint(nodeCount) - 1) / 2
+}
+
 func BenchmarkTsortCyclicGraph(b *testing.B) {
 	//b.Skipf("Fix testutils before re-enabling this, so we can skip in a vm")
 	benchmarkCases := []struct {
@@ -513,15 +559,15 @@ func BenchmarkTsortCyclicGraph(b *testing.B) {
 	}{
 		{
 			name:        "small cyclic graph",
-			cyclicGraph: gen.RandomDirectedCyclicGraph(10),
+			cyclicGraph: randomDirectedCyclicGraph(10),
 		},
 		{
 			name:        "medium cyclic graph",
-			cyclicGraph: gen.RandomDirectedCyclicGraph(50),
+			cyclicGraph: randomDirectedCyclicGraph(50),
 		},
 		{
 			name:        "large cyclic graph",
-			cyclicGraph: gen.RandomDirectedCyclicGraph(100),
+			cyclicGraph: randomDirectedCyclicGraph(100),
 		},
 	}
 
@@ -538,12 +584,27 @@ func BenchmarkTsortCyclicGraph(b *testing.B) {
 	}
 }
 
+func randomDirectedCyclicGraph(nodeCount uint) string {
+	result := new(strings.Builder)
+	// Produces a cyclic graph with a fixed RNG seed and through
+	// sheer probability.
+	for i := uint(0); i < nodeCount; i++ {
+		_, _ = fmt.Fprintln(result, i, i)
+	}
+	for range 100 * nodeCount {
+		x := rnd.UintN(nodeCount + 1)
+		y := rnd.UintN(nodeCount + 1)
+		_, _ = fmt.Fprintln(result, x, y)
+	}
+	return result.String()
+}
+
 func BenchmarkStressTest(b *testing.B) {
 	// Stress test the implementation to make sure it can handle humongously
 	// deep graphs without crashing.
 	//
 	// WARNING: Consumes ~2GB of memory whilst running.
-	g := gen.SeqFrom0To(2_000_000)
+	g := lineGraphFrom0To2000000()
 
 	for b.Loop() {
 		err := run(strings.NewReader(g), io.Discard, io.Discard)
@@ -551,6 +612,14 @@ func BenchmarkStressTest(b *testing.B) {
 			b.Fatalf("unexpected error: %v", err)
 		}
 	}
+}
+
+func lineGraphFrom0To2000000() string {
+	result := new(strings.Builder)
+	for i := uint(0); i < 2_000_000; i++ {
+		_, _ = fmt.Fprintln(result, i, i+1)
+	}
+	return result.String()
 }
 
 func tempFile(t *testing.T, contents string) (file string) {

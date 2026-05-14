@@ -44,7 +44,7 @@ func (g *graph) addNodeInternal(node string) nodeID {
 	g.nodeToID[node] = id
 	g.idToNode = append(g.idToNode, node)
 
-	g.nodeIDToSuccessorIDs = append(g.nodeIDToSuccessorIDs, make([]nodeID, 0))
+	g.nodeIDToSuccessorIDs = append(g.nodeIDToSuccessorIDs, nil)
 
 	return id
 }
