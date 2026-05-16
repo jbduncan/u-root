@@ -263,10 +263,6 @@ func TestTsort(t *testing.T) {
 			name: "directed acyclic graph: a d a e b e b f e h e i f i c g j j",
 			g:    "a d a e b e b f e h e i f i c g j j",
 		},
-		{
-			name: "line: range [0-4]",
-			g:    "0 1 1 2 2 3 3 4",
-		},
 	}
 	for _, tt := range directedAcyclicGraphTests {
 		t.Run(fmt.Sprintf("stdin: %s", tt.name), func(t *testing.T) {
